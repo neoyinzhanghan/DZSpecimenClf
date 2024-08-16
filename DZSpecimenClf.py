@@ -77,10 +77,7 @@ class DZSpecimenClf(nn.Module):
         # apply differentiable indexing
         x = differentiable_index_2d_batch(search_view_indexibles, x)
 
-        # reshape the indexing_output to have the shape (b, N*k, 3) from (b, N*k, 1, 3)
-        x = x.view(-1, self.N * self.k, 3)
-
-        # assert the indexing_output is of the correct shape
+        # assert the indexing_output is of the correct shape [b, N*k, 3]
         assert (
             x.shape[1] == self.N * self.k
         ), f"Output shape is {x.shape}, rather than the expected ({self.N * self.k})"
@@ -88,10 +85,10 @@ class DZSpecimenClf(nn.Module):
             x.shape[2] == 3
         ), f"Output shape is {x.shape}, rather than the expected (3)"
 
-        # reshape the indexing_output to have the shape (N, k, 3)
-        x = x.view(-1, self.N, self.k, 3)
+        # reshape the indexing_output to have the shape (b, N, k, 3)
+        x = x.view(x.shape[0], self.N, self.k, 3)
 
-        # assert that the weights are of the correct shape
+        # assert that the weights are of the correct shape that can be multiplied with the indexing_output
         assert self.weights.shape == (
             self.N,
             self.k,
@@ -101,20 +98,39 @@ class DZSpecimenClf(nn.Module):
         # multiply the indexing_output by the weights
         x = x * self.weights
 
-        # sum the output along the k, and the output should be of shape (b, N, 3)
-        x = torch.sum(x, dim=2)
+        # assert that the output is of the correct shape [b, N, k, 3]
+        assert x.shape == (
+            x.shape[0],
+            self.N,
+            self.k,
+            3,
+        ), f"Output shape is {x.shape}, rather than the expected ({x.shape[0]}, {self.N}, {self.k}, 3)"
 
+        # assert that the output is of the correct shape [b, N, 3]
         assert x.shape == (
             x.shape[0],
             self.N,
             3,
         ), f"Output shape is {x.shape}, rather than the expected ({x.shape[0]}, {self.N}, 3)"
 
+        # reshape the rgb_weights to have the shape (1, 1, 3)
+        self.rgb_weights = self.rgb_weights.view(1, 1, 3)
+
         # use the rgb_weights to multiply the output across the 3 channels and then sum across the channels to have output of shape (b, N)
         x = x * self.rgb_weights
-        x = torch.sum(x, dim=2)
 
-        # now make sure the output has shape (b,N)
+        # assert that the output is of the correct shape [b, N, 3]
+        assert x.shape == (
+            x.shape[0],
+            self.N,
+            self.k,
+            3,
+        ), f"Output shape is {x.shape}, rather than the expected ({x.shape[0]}, {self.N}, {self.k}, 3)"
+
+        # sum across the 3 channels which is hte last dimension and have the output of shape (b, N)
+        x = x.sum(dim=-1)
+
+        # assert that the output is of the correct shape [b, N]
         assert x.shape == (
             x.shape[0],
             self.N,
