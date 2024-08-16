@@ -182,6 +182,16 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
                 2
             )  # Shape: [Nk, 1, 1]
 
+            # do the same for the rest of the weights
+            weights_y_ceil = weights_y_ceil.unsqueeze(1).unsqueeze(
+                2
+            )  # Shape: [Nk, 1, 1]
+            weights_y_floor = weights_y_floor.unsqueeze(1).unsqueeze(
+                2
+            )  # Shape: [Nk, 1, 1]
+
+            
+
             # print(weights_x_ceil.shape)
             # print(values_floor_floor.shape)
 
