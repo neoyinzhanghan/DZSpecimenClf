@@ -49,6 +49,18 @@ class NDPI_Dataset(Dataset):
         if split:
             self.metadata = self.metadata[self.metadata["split"] == split]
         self.transforms = transforms
+        self.class_weights = self._compute_class_weights()
+
+    def _compute_class_weights(self):
+        class_counts = self.metadata["class_index"].value_counts().to_dict()
+        total_samples = len(self.metadata)
+        class_weights = {
+            cls: total_samples / count for cls, count in class_counts.items()
+        }
+        sample_weights = [
+            class_weights[class_idx] for class_idx in self.metadata["class_index"]
+        ]
+        return torch.DoubleTensor(sample_weights)
 
     def __len__(self):
         return len(self.metadata)
@@ -60,11 +72,6 @@ class NDPI_Dataset(Dataset):
         ndpi_path = self.metadata.iloc[idx]["ndpi_path"]
         class_index = self.metadata.iloc[idx]["class_index"]
         top_view_image, search_view_indexible = ndpi_to_data(ndpi_path)
-
-        if self.transforms:
-            top_view_image = self.transforms(top_view_image)
-
-        return top_view_image, search_view_indexible, class_index
 
 
 def custom_collate_fn(batch):
