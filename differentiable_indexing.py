@@ -190,8 +190,6 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
                 2
             )  # Shape: [Nk, 1, 1]
 
-            
-
             # print(weights_x_ceil.shape)
             # print(values_floor_floor.shape)
 
@@ -215,6 +213,10 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             interpolated_y_ceil = (
                 weights_x_ceil * values_ceil_floor + weights_x_floor * values_ceil_ceil
             )
+
+            # reshape the interpolated_y_floor and interpolated_y_ceil to have the shape (Nk, 3)
+            interpolated_y_floor = interpolated_y_floor.squeeze(1)
+            interpolated_y_ceil = interpolated_y_ceil.squeeze(1)
 
             output = (
                 weights_y_ceil * interpolated_y_floor
