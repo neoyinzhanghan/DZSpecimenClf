@@ -1,3 +1,4 @@
+import os
 import torch
 import openslide
 import pandas as pd
@@ -11,7 +12,7 @@ from torch.utils.data import DataLoader
 
 def ndpi_to_data(ndpi_path):
     """The input is a path to an .ndpi file. The output is tuple of topview_image, search_view_indexible.
-    topview_image is a PIL image of the level 7 of the .ndpi file.
+    topview_image is a PIL image of the level 7 of the .ndpi file. it is saved in the same directory as the .ndpi file with the same name and .jpg extension.
     search_view_indexible is a SearchViewIndexible object.
     """
 
@@ -23,9 +24,17 @@ def ndpi_to_data(ndpi_path):
     top_view_height, top_view_width = slide.level_dimensions[top_view_level]
 
     # Extract the top view image
-    top_view_image = slide.read_region(
-        (0, 0), top_view_level, (top_view_width, top_view_height)
-    )
+    top_view_image_path = ndpi_path.replace(".ndpi", ".jpg")
+
+    # Check if the top view image already exists
+    if not os.path.exists(top_view_image_path):
+        top_view_image = slide.read_region(
+            (0, 0), top_view_level, (top_view_width, top_view_height)
+        )
+        top_view_image = top_view_image.convert("RGB")
+        top_view_image.save(top_view_image_path, "JPEG", quality=95)
+    else:
+        top_view_image = Image.open(top_view_image_path)
 
     # convert to RGB if it is not
     if top_view_image.mode != "RGB":
