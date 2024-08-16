@@ -193,8 +193,12 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             print(f"Shape of indices: {indices.shape}")
 
             # grad_output has shape [Nk, 3], indices_mat has shape [Nk, 2, 3]
+            grad_indices = torch.bmm(
+                grad_indices_mat, grad_output.unsqueeze(-1)
+            )  # Shape: [Nk, 2, 1]
 
-            grad_indices = torch.einsum("nk,nk->n", grad_output, grad_indices_mat)
+            # Remove the last dimension to get the final gradient shape [Nk, 2]
+            grad_indices = grad_indices.squeeze(-1)  # Shape: [Nk, 2]
 
             print(f"Shape of grad_indices: {grad_indices.shape}")
 
