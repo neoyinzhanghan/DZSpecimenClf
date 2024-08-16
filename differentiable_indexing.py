@@ -127,7 +127,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
 
         # Stack output for the batch
         return output
-    
+
     @staticmethod
     def backward(ctx, grad_output_batch):
         saved_tensors = ctx.saved_tensors
@@ -166,11 +166,11 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             grad_indices_y = (
                 (values_ceil_floor + values_ceil_ceil)
                 - (values_floor_floor + values_floor_ceil)
-            ) * grad_output
+            ) * grad_output.unsqueeze(2)
             grad_indices_x = (
                 (values_floor_ceil + values_ceil_ceil)
                 - (values_floor_floor + values_ceil_floor)
-            ) * grad_output
+            ) * grad_output.unsqueeze(2)
 
             # Combine gradients for y and x
             grad_indices = torch.stack([grad_indices_y, grad_indices_x], dim=1)
