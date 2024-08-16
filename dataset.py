@@ -16,8 +16,12 @@ def ndpi_to_data(ndpi_path):
     search_view_indexible is a SearchViewIndexible object.
     """
 
-    # Load the .ndpi file
-    slide = openslide.OpenSlide(ndpi_path)
+    try:
+        # Load the .ndpi file
+        slide = openslide.OpenSlide(ndpi_path)
+    except openslide.OpenSlideError as e:
+        print(f"Error loading {ndpi_path}: {e}")
+        raise e
 
     # Get the dimensions of the top view
     top_view_level = 7
