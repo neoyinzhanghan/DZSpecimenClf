@@ -171,6 +171,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
 
         # the current shape is torch.Size([Nk, 2, 1, 3]), we need to make it torch.Size([Nk, 2, 3])
         for i in range(len(grad_indices_batch)):
+            print(grad_indices_batch[i].shape)
             grad_indices_batch[i] = grad_indices_batch[i].squeeze(2)
 
             print(grad_indices_batch[i].shape)
