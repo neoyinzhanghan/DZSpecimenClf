@@ -2,7 +2,7 @@ import torch
 import openslide
 import pandas as pd
 import pytorch_lightning as pl
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from PIL import Image
 from torchvision import transforms
 from search_view_indexible import SearchViewIndexible
@@ -91,13 +91,14 @@ def custom_collate_fn(batch):
 # now write a lightning data module based on the metadata file
 # and the custom collate function
 class NDPI_DataModule(pl.LightningDataModule):
-    def __init__(self, metadata_file, batch_size=32):
+    def __init__(self, metadata_file, batch_size=32, num_workers=4):
         super().__init__()
         self.metadata_file = metadata_file
         self.batch_size = batch_size
         self.transform = transforms.Compose(
             [transforms.Resize((224, 224)), transforms.ToTensor()]
         )
+        self.num_workers = num_workers
 
     def setup(self, stage=None):
         # Assuming you have a column 'split' in your CSV that contains 'train'/'val' labels
@@ -114,11 +115,14 @@ class NDPI_DataModule(pl.LightningDataModule):
             )
 
     def train_dataloader(self):
+        sampler = WeightedRandomSampler(
+            self.train_dataset.class_weights, len(self.train_dataset)
+        )
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=4,
+            num_workers=self.num_workers,
+            sampler=sampler,  # Use sampler instead of shuffle for balanced sampling
             collate_fn=custom_collate_fn,
         )
 
@@ -127,7 +131,7 @@ class NDPI_DataModule(pl.LightningDataModule):
             self.val_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=4,
+            num_workers=self.num_workers,
             collate_fn=custom_collate_fn,
         )
 
@@ -136,18 +140,6 @@ class NDPI_DataModule(pl.LightningDataModule):
             self.test_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=4,
+            num_workers=self.num_workers,
             collate_fn=custom_collate_fn,
         )
-
-
-if __name__ == "__main__":
-
-    # HERE IS A USAGE EXAMPLE
-    # Assuming NDPI_Dataset is already defined and initialized
-    dataset = NDPI_Dataset("path_to_metadata.csv")
-
-    # DataLoader with custom collate function
-    data_loader = DataLoader(
-        dataset, batch_size=4, shuffle=True, num_workers=0, collate_fn=custom_collate_fn
-    )

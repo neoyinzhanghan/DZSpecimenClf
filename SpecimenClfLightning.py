@@ -6,6 +6,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from torchmetrics import Accuracy, F1Score, AUROC
 from DZSpecimenClf import DZSpecimenClf
 from dataset import NDPI_DataModule
+from pytorch_lightning.loggers import TensorBoardLogger
 
 
 # Assuming the SpecimenClassifier and NDPI_DataModule are properly defined and imported
@@ -15,9 +16,15 @@ class SpecimenClassifier(pl.LightningModule):
         self.model = DZSpecimenClf(N, k, num_classes)
         self.learning_rate = learning_rate
         self.loss_fn = nn.CrossEntropyLoss()
-        self.accuracy = Accuracy(task="multiclass", num_classes=num_classes)
-        self.f1_score = F1Score(task="multiclass", num_classes=num_classes)
-        self.auroc = AUROC(task="multiclass", num_classes=num_classes)
+
+        task = "multiclass"
+
+        self.train_accuracy = Accuracy(task=task, num_classes=num_classes)
+        self.val_accuracy = Accuracy(task=task, num_classes=num_classes)
+        self.train_auroc = AUROC(num_classes=num_classes, task=task)
+        self.val_auroc = AUROC(num_classes=num_classes, task=task)
+        self.test_accuracy = Accuracy(num_classes=num_classes, task=task)
+        self.test_auroc = AUROC(num_classes=num_classes, task=task)
 
     def forward(self, topview_image_tensor, search_view_indexibles):
         return self.model(topview_image_tensor, search_view_indexibles)
@@ -72,15 +79,16 @@ def main():
     k = 128  # Example value
     num_classes = 2  # Number of classes in your dataset
 
-    data_module = NDPI_DataModule(metadata_file, batch_size)
+    data_module = NDPI_DataModule(metadata_file, batch_size, num_workers=12)
     model = SpecimenClassifier(N, k, num_classes)
+    logger = TensorBoardLogger("lightning_logs", name="my_model")
 
     # Setup the Trainer
     trainer = pl.Trainer(
         max_epochs=50,
-        gpus=1 if torch.cuda.is_available() else 0,
-        logger=pl.loggers.TensorBoardLogger("training/logs"),
-        progress_bar_refresh_rate=20,
+        logger=logger,
+        devices=1 if torch.cuda.is_available() else 0,
+        accelerator="gpu",
     )
 
     # Train the model
