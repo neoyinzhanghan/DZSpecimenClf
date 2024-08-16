@@ -33,14 +33,6 @@ class DZSpecimenClf(nn.Module):
         # Pass input through the feature extractor part
         x = self.resnext50(topview_image_tensor)
 
-        # assert that the output is of the correct shape
-        assert (
-            x.shape[1]
-            == search_view_indexibles.search_view_height
-            * search_view_indexibles.search_view_width
-            * 2
-        ), f"Output shape is {x.shape}, rather than the expected ({search_view_indexibles.search_view_height * search_view_indexibles.search_view_width * 2})"
-
         x = x.view(x.size(0), -1, 2)
 
         # assert that the output is of the correct shape
