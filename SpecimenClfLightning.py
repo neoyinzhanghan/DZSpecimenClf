@@ -66,10 +66,10 @@ class SpecimenClassifier(pl.LightningModule):
 
 
 def main():
-    metadata_file = "path_to_your_metadata.csv"
+    metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
     batch_size = 32
-    N = 10  # Example value
-    k = 5  # Example value
+    N = 512  # Example value
+    k = 128  # Example value
     num_classes = 2  # Number of classes in your dataset
 
     data_module = NDPI_DataModule(metadata_file, batch_size)
