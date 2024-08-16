@@ -170,10 +170,10 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             # Calculate gradients for indices
             grad_indices_y_mat = (values_ceil_floor + values_ceil_ceil) - (
                 values_floor_floor + values_floor_ceil
-            )
+            ).squeeze(1)
             grad_indices_x_mat = (values_floor_ceil + values_ceil_ceil) - (
                 values_floor_floor + values_ceil_floor
-            )
+            ).squeeze(1)
 
             # stack the gradients for y and x along the dim 1
 
