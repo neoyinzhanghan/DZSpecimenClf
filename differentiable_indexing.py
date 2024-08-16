@@ -190,11 +190,11 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             print(f"Shape of grad_indices_mat: {grad_indices_mat.shape}")
 
             print(f"Shape of grad_output: {grad_output.shape}")
-            print(f"Shape of indices: {indices.shape}")
+            print(f"Shape of indices: {grad_indices_mat.shape}")
 
             # Ensure indices_mat is a float tensor
-            if indices_mat.dtype != torch.float32:
-                indices_mat = indices_mat.float()
+            if grad_indices_mat.dtype != torch.float32:
+                grad_indices_mat = grad_indices_mat.float()
 
             # Ensure grad_output is a float tensor
             if grad_output.dtype != torch.float32:
