@@ -6,6 +6,7 @@ from torchmetrics import Accuracy, F1Score, AUROC
 from DZSpecimenClf import DZSpecimenClf
 from dataset import NDPI_DataModule
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 
 class SpecimenClassifier(nn.Module):
@@ -152,7 +153,8 @@ def main():
 
     # Training loop
     num_epochs = 50
-    for epoch in range(num_epochs):
+    for epoch in tqdm(range(num_epochs), desc="Epochs"):
+        print(f"Epoch {epoch} training ... ")
         train(
             model,
             train_loader,
@@ -165,6 +167,8 @@ def main():
             writer,
             epoch,
         )
+
+        print("Validation")
         validate(
             model, val_loader, loss_fn, accuracy, auroc, f1_score, device, writer, epoch
         )
