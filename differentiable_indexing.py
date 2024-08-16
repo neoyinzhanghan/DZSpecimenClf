@@ -155,6 +155,11 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             values_ceil_floor = values_ceil_floor.to(grad_output.device)
             values_ceil_ceil = values_ceil_ceil.to(grad_output.device)
 
+            print(f"Values floor floor shape: {values_floor_floor.shape}")
+            print(f"Values floor ceil shape: {values_floor_ceil.shape}")
+            print(f"Values ceil floor shape: {values_ceil_floor.shape}")
+            print(f"Values ceil ceil shape: {values_ceil_ceil.shape}")
+
             # Calculate gradients for indices
             grad_indices_y = (
                 (values_ceil_floor + values_ceil_ceil)
