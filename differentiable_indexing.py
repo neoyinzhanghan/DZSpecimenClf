@@ -57,6 +57,9 @@ class DifferentiableIndex2DFunction(torch.autograd.Function):
         weights_x_floor = indices[:, 1] - indices_x_floor.float().to(device)
         weights_x_ceil = indices_x_ceil.float().to(device) - indices[:, 1]
 
+        print(weights_x_ceil.shape)
+        print(values_floor_floor.shape)
+        
         interpolated_y_floor = (
             weights_x_ceil * values_floor_floor + weights_x_floor * values_floor_ceil
         )
