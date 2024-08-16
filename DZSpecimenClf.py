@@ -24,7 +24,7 @@ class DZSpecimenClf(nn.Module):
         self.weights = nn.Parameter(torch.rand((self.N, self.k, 1), requires_grad=True))
 
         # initialize a trainable three numbers each corresponding to each of the RGB channels
-        self.rgb_weights = nn.Parameter(torch.rand((3), requires_grad=True))
+        self.rgb_weights = nn.Parameter(torch.rand((1, 1, 3), requires_grad=True))
 
         # now have a last forward from N to num_classes
         self.fc = nn.Linear(N, num_classes)
@@ -115,9 +115,6 @@ class DZSpecimenClf(nn.Module):
             self.N,
             3,
         ), f"Output shape is {x.shape}, rather than the expected ({x.shape[0]}, {self.N}, 3)"
-
-        # reshape the rgb_weights to have the shape (1, 1, 3)
-        self.rgb_weights = self.rgb_weights.view(1, 1, 3)
 
         # use the rgb_weights to multiply the output across the 3 channels and then sum across the channels to have output of shape (b, N)
         x = x * self.rgb_weights
