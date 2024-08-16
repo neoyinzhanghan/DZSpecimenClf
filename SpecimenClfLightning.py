@@ -15,9 +15,9 @@ class SpecimenClassifier(pl.LightningModule):
         self.model = DZSpecimenClf(N, k, num_classes)
         self.learning_rate = learning_rate
         self.loss_fn = nn.CrossEntropyLoss()
-        self.accuracy = Accuracy()
-        self.f1_score = F1Score(num_classes=num_classes, average="macro")
-        self.auroc = AUROC(num_classes=num_classes)
+        self.accuracy = Accuracy(task="multiclass", num_classes=num_classes)
+        self.f1_score = F1Score(task="multiclass", num_classes=num_classes)
+        self.auroc = AUROC(task="multiclass", num_classes=num_classes)
 
     def forward(self, topview_image_tensor, search_view_indexibles):
         return self.model(topview_image_tensor, search_view_indexibles)
