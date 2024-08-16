@@ -217,8 +217,13 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
         # Save all necessary tensors for the backward pass
         ctx.save_for_backward(*saved_tensors)
 
+        output = torch.stack(output_batch)
+
+        print(f"Output shape: {output.shape}")
+        print(f"Output device: {output.device}")
+
         # Stack output for the batch
-        return torch.stack(output_batch)
+        return output
 
     @staticmethod
     def backward(ctx, grad_output_batch):
@@ -261,24 +266,20 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             grad_indices = torch.stack([grad_indices_y, grad_indices_x], dim=1)
             grad_indices_batch.append(grad_indices)
 
-            # print the shape of the grad_indices_batch
-            print(grad_indices_batch[-1].shape)
-            print(len(grad_indices_batch))
-
             # the current shape is torch.Size([Nk, 2, 1, 3]), we need to make it torch.Size([Nk, 2, 3])
             for i in range(len(grad_indices_batch)):
                 grad_indices_batch[i] = grad_indices_batch[i].squeeze(2)
 
             grad_indices_stacked = torch.stack(grad_indices_batch, dim=0)
 
-            print(grad_indices_stacked.shape)
-            print(grad_indices_stacked.device)
-
         # No gradient for indexable_objs
         grad_indexable_objs = None
 
         # Stack gradients for the batch
-        return grad_indexable_objs, grad_indices_stacked
+        return (
+            grad_indexable_objs,
+            grad_indices_stacked,
+        )  # the output have shape [b, Nk, 2, 3]
 
 
 # Example use in your model

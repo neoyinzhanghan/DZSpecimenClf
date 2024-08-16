@@ -21,7 +21,7 @@ class DZSpecimenClf(nn.Module):
         self.k = k
 
         # initailize the trainable tensor
-        self.weights = nn.Parameter(torch.rand((self.N, self.k, 1), requires_grad=True))
+        self.weights = nn.Parameter(torch.rand((self.N, self.k, 1, 1), requires_grad=True))
 
         # initialize a trainable three numbers each corresponding to each of the RGB channels
         self.rgb_weights = nn.Parameter(torch.rand((3), requires_grad=True))
@@ -95,6 +95,7 @@ class DZSpecimenClf(nn.Module):
         assert self.weights.shape == (
             self.N,
             self.k,
+            1,
             1,
         ), f"Output shape is {self.weights.shape}, rather than the expected ({self.N}, {self.k}, 1)"
 
