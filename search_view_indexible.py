@@ -45,7 +45,11 @@ class SearchViewIndexible:
             0 <= idx[1] < self.search_view_width
         ), f"x: {idx[1]} is out of range of the search view width: {self.search_view_width}"
 
-        slide = openslide.OpenSlide(self.wsi_path)
+        try:
+            slide = openslide.OpenSlide(self.wsi_path)
+        except openslide.OpenSlideError as e:
+            print(f"Error loading {self.wsi_path}: {e}")
+            raise e
 
         y, x = idx
         # Extracting a region of 1x1 pixels
