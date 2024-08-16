@@ -132,7 +132,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
     def backward(ctx, grad_output_batch):
         saved_tensors = ctx.saved_tensors
 
-        print(f"shape of grad_output_batch: {grad_output_batch.shape}")
+        # print(f"shape of grad_output_batch: {grad_output_batch.shape}")
 
         # Gradient container for indices_batch
         grad_indices_batch = []
@@ -162,10 +162,10 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             values_ceil_floor = values_ceil_floor.to(grad_output.device)
             values_ceil_ceil = values_ceil_ceil.to(grad_output.device)
 
-            print(f"Values floor floor shape: {values_floor_floor.shape}")
-            print(f"Values floor ceil shape: {values_floor_ceil.shape}")
-            print(f"Values ceil floor shape: {values_ceil_floor.shape}")
-            print(f"Values ceil ceil shape: {values_ceil_ceil.shape}")
+            # print(f"Values floor floor shape: {values_floor_floor.shape}")
+            # print(f"Values floor ceil shape: {values_floor_ceil.shape}")
+            # print(f"Values ceil floor shape: {values_ceil_floor.shape}")
+            # print(f"Values ceil ceil shape: {values_ceil_ceil.shape}")
 
             # Calculate gradients for indices
             grad_indices_y_mat = (values_ceil_floor + values_ceil_ceil) - (
@@ -179,18 +179,17 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             grad_indices_y_mat = grad_indices_y_mat.squeeze(1)
             grad_indices_x_mat = grad_indices_x_mat.squeeze(1)
 
-            print(f"Shape of grad_indices_y_mat: {grad_indices_y_mat.shape}")
-            print(f"Shape of grad_indices_x_mat: {grad_indices_x_mat.shape}")
+            # print(f"Shape of grad_indices_y_mat: {grad_indices_y_mat.shape}")
+            # print(f"Shape of grad_indices_x_mat: {grad_indices_x_mat.shape}")
 
             # stack the gradients for y and x along the dim 1
             grad_indices_mat = torch.stack(
                 [grad_indices_y_mat, grad_indices_x_mat], dim=1
             )
 
-            print(f"Shape of grad_indices_mat: {grad_indices_mat.shape}")
-
-            print(f"Shape of grad_output: {grad_output.shape}")
-            print(f"Shape of indices: {grad_indices_mat.shape}")
+            # print(f"Shape of grad_indices_mat: {grad_indices_mat.shape}")
+            # print(f"Shape of grad_output: {grad_output.shape}")
+            # print(f"Shape of indices: {grad_indices_mat.shape}")
 
             # Ensure indices_mat is a float tensor
             if grad_indices_mat.dtype != torch.float32:
@@ -208,13 +207,13 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             # Remove the last dimension to get the final gradient shape [Nk, 2]
             grad_indices = grad_indices.squeeze(-1)  # Shape: [Nk, 2]
 
-            print(f"Shape of grad_indices: {grad_indices.shape}")
+            # print(f"Shape of grad_indices: {grad_indices.shape}")
 
             grad_indices_batch.append(grad_indices)
 
         grad_indices_stacked = torch.stack(grad_indices_batch, dim=0)
 
-        print(f"Stacked grad_indices shape: {grad_indices_stacked.shape}")
+        # print(f"Stacked grad_indices shape: {grad_indices_stacked.shape}")
 
         # No gradient for indexable_objs
         grad_indexable_objs = None
