@@ -204,13 +204,6 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
 
             grad_indices_batch.append(grad_indices)
 
-        # Ensure consistent shapes before stacking
-        for i in range(len(grad_indices_batch)):
-            print(grad_indices_batch[i].shape)
-            grad_indices_batch[i] = grad_indices_batch[i].squeeze()
-
-            print(grad_indices_batch[i].shape)
-
         grad_indices_stacked = torch.stack(grad_indices_batch, dim=0)
 
         print(f"Stacked grad_indices shape: {grad_indices_stacked.shape}")
