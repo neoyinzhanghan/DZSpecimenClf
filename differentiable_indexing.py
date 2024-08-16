@@ -140,21 +140,23 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
         # Each item in the batch has 5 saved tensors
         num_saved_tensors_per_item = 5
 
-        # Process each item in the batch
-        for i in range(0, len(saved_tensors), num_saved_tensors_per_item):
+        batch_size = grad_output_batch.shape[0]
+
+        for i in range(batch_size):
+            start_idx = i * num_saved_tensors_per_item
+            end_idx = start_idx + num_saved_tensors_per_item
+
             (
                 indices,
                 values_floor_floor,
                 values_floor_ceil,
                 values_ceil_floor,
                 values_ceil_ceil,
-            ) = saved_tensors[i : i + num_saved_tensors_per_item]
-            grad_output = grad_output_batch[i // num_saved_tensors_per_item]
+            ) = saved_tensors[start_idx:end_idx]
 
-            # print the shape of the grad_output_batch
-            print(f"Grad output shape: {grad_output.shape}")
+            grad_output = grad_output_batch[i]
 
-            # move the values to the same device as grad_output
+            # Ensure that tensors are on the correct device
             values_floor_floor = values_floor_floor.to(grad_output.device)
             values_floor_ceil = values_floor_ceil.to(grad_output.device)
             values_ceil_floor = values_ceil_floor.to(grad_output.device)
@@ -179,10 +181,10 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             grad_indices = torch.stack([grad_indices_y, grad_indices_x], dim=1)
             grad_indices_batch.append(grad_indices)
 
-        # the current shape is torch.Size([Nk, 2, 1, 3]), we need to make it torch.Size([Nk, 2, 3])
+        # Ensure consistent shapes before stacking
         for i in range(len(grad_indices_batch)):
             print(grad_indices_batch[i].shape)
-            grad_indices_batch[i] = grad_indices_batch[i].squeeze(2)
+            grad_indices_batch[i] = grad_indices_batch[i].squeeze()
 
             print(grad_indices_batch[i].shape)
 
@@ -197,7 +199,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
         return (
             grad_indexable_objs,
             grad_indices_stacked,
-        )  # the output have shape [b, Nk, 2, 3]
+        )
 
 
 # Example use in your model
