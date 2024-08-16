@@ -132,6 +132,8 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
     def backward(ctx, grad_output_batch):
         saved_tensors = ctx.saved_tensors
 
+        print(f"shape of grad_output_batch: {grad_output_batch[0].shape}")
+
         # Gradient container for indices_batch
         grad_indices_batch = []
 
