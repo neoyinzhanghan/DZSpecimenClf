@@ -1,5 +1,6 @@
 import torch
 
+
 class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
     @staticmethod
     def forward(ctx, indexable_objs, indices_batch):
@@ -167,11 +168,11 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             grad_indices = torch.stack([grad_indices_y, grad_indices_x], dim=1)
             grad_indices_batch.append(grad_indices)
 
-            # the current shape is torch.Size([Nk, 2, 1, 3]), we need to make it torch.Size([Nk, 2, 3])
-            for i in range(len(grad_indices_batch)):
-                grad_indices_batch[i] = grad_indices_batch[i].squeeze(2)
+        # the current shape is torch.Size([Nk, 2, 1, 3]), we need to make it torch.Size([Nk, 2, 3])
+        for i in range(len(grad_indices_batch)):
+            grad_indices_batch[i] = grad_indices_batch[i].squeeze(2)
 
-            grad_indices_stacked = torch.stack(grad_indices_batch, dim=0)
+        grad_indices_stacked = torch.stack(grad_indices_batch, dim=0)
 
         # No gradient for indexable_objs
         grad_indexable_objs = None
