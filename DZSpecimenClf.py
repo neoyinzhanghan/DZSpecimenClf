@@ -106,6 +106,9 @@ class DZSpecimenClf(nn.Module):
             3,
         ), f"Output shape is {x.shape}, rather than the expected ({x.shape[0]}, {self.N}, {self.k}, 3)"
 
+        # sum across the k dimension
+        x = x.sum(dim=2)
+
         # assert that the output is of the correct shape [b, N, 3]
         assert x.shape == (
             x.shape[0],
