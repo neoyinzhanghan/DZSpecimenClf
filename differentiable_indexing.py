@@ -168,14 +168,21 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             print(f"Values ceil ceil shape: {values_ceil_ceil.shape}")
 
             # Calculate gradients for indices
-            grad_indices_y = (
-                (values_ceil_floor + values_ceil_ceil)
-                - (values_floor_floor + values_floor_ceil)
-            ) * grad_output.unsqueeze(1)
-            grad_indices_x = (
-                (values_floor_ceil + values_ceil_ceil)
-                - (values_floor_floor + values_ceil_floor)
-            ) * grad_output.unsqueeze(1)
+            grad_indices_y_mat = (values_ceil_floor + values_ceil_ceil) - (
+                values_floor_floor + values_floor_ceil
+            )
+            grad_indices_x_mat = (values_floor_ceil + values_ceil_ceil) - (
+                values_floor_floor + values_ceil_floor
+            )
+
+            print(f"Shape of grad_indices_y_mat: {grad_indices_y_mat.shape}")
+            print(f"Shape of grad_indices_x_mat: {grad_indices_x_mat.shape}")
+
+            print(f"Shape of grad_output: {grad_output.shape}")
+            print(f"Shape of indices: {indices.shape}")
+
+            grad_indices_y = torch.sum(grad_indices_y_mat * grad_output, dim=1)
+            grad_indices_x = torch.sum(grad_indices_x_mat * grad_output, dim=1)
 
             # Combine gradients for y and x
             grad_indices = torch.stack([grad_indices_y, grad_indices_x], dim=1)
