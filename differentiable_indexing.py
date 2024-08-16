@@ -149,6 +149,9 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             ) = saved_tensors[i : i + num_saved_tensors_per_item]
             grad_output = grad_output_batch[i // num_saved_tensors_per_item]
 
+            # print the shape of the grad_output_batch
+            print(f"Grad output shape: {grad_output.shape}")
+
             # move the values to the same device as grad_output
             values_floor_floor = values_floor_floor.to(grad_output.device)
             values_floor_ceil = values_floor_ceil.to(grad_output.device)
