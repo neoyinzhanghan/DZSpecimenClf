@@ -51,14 +51,30 @@ class DZSpecimenClf(nn.Module):
         # apply the sigmoid activation
         x = self.sigmoid(x)
 
-        search_view_height = search_view_indexibles.search_view_height
-        search_view_width = search_view_indexibles.search_view_width
+        search_view_heights = [
+            search_view_indexible.search_view_height
+            for search_view_indexible in search_view_indexibles
+        ]
+        search_view_widths = [
+            search_view_indexible.search_view_width
+            for search_view_indexible in search_view_indexibles
+        ]
+
+        assert (
+            len(search_view_heights)
+            == len(search_view_widths)
+            == len(search_view_indexibles)
+            == x.shape[0]
+        ), f"Batch dim / length of search_view_heights: {len(search_view_heights)}, search_view_widths: {len(search_view_widths)}, search_view_indexibles: {len(search_view_indexibles)}, x: {x.shape[0]}"
 
         # x is a bunch of y, x coordinates there are b, N*k of them, multiply y by the search view height and x by the search view width
         # Scale x by multiplying the y and x coordinates by the respective dimensions
         # First column of x are y coordinates, second column are x coordinates
-        x[..., 0] *= search_view_height
-        x[..., 1] *= search_view_width
+
+        # multiple x[b: :0] parallelly across the batch dimension by the search view height
+        x[:, :, 0] = x[:, :, 0] * torch.tensor(search_view_heights).view(-1, 1, 1)
+        # multiple x[b: :1] parallelly across the batch dimension by the search view width
+        x[:, :, 1] = x[:, :, 1] * torch.tensor(search_view_widths).view(-1, 1, 1)
 
         # apply differentiable indexing
         x = differentiable_index_2d_batch(search_view_indexibles, x)
