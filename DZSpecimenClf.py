@@ -69,13 +69,14 @@ class DZSpecimenClf(nn.Module):
         # Scale x by multiplying the y and x coordinates by the respective dimensions
         # First column of x are y coordinates, second column are x coordinates
 
-        # multiple x[b: :0] parallelly across the batch dimension by the search view height
-        x[:, :, 0] = x[:, :, 0] * search_view_heights_tensor
-        # multiple x[b: :1] parallelly across the batch dimension by the search view width
-        x[:, :, 1] = x[:, :, 1] * search_view_widths_tensor
+        # Instead of modifying x directly, create new tensors for the modified values
+        x_scaled = x.clone()  # Clone x to avoid inplace modification
 
-        # apply differentiable indexing
-        x = differentiable_index_2d_batch(search_view_indexibles, x)
+        x_scaled[:, :, 0] = x[:, :, 0] * search_view_heights_tensor
+        x_scaled[:, :, 1] = x[:, :, 1] * search_view_widths_tensor
+
+        # Continue with x_scaled instead of x
+        x = differentiable_index_2d_batch(search_view_indexibles, x_scaled)
 
         # assert the indexing_output is of the correct shape [b, N*k, 3]
         assert (
