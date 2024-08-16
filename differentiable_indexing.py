@@ -175,6 +175,28 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
                 values_floor_floor + values_ceil_floor
             )
 
+            # stack the gradients for y and x along the dim 1
+            grad_indices_y_mat = grad_indices_y_mat.unsqueeze(1)
+
+            grad_indices_x_mat = grad_indices_x_mat.unsqueeze(1)
+
+            grad_indices_mat = torch.stack(
+                [grad_indices_y_mat, grad_indices_x_mat], dim=1
+            )
+
+            # assert the shape of the grad_indices_mat is [Nk, 2, 3]
+            assert (
+                grad_indices_mat.shape[0] == indices.shape[0]
+            ), f"grad_indices_mat shape[0] is {grad_indices_mat.shape[0]}, rather than the expected {indices.shape[0]}"
+            assert (
+                grad_indices_mat.shape[1] == 2
+            ), f"grad_indices_mat shape[1] is {grad_indices_mat.shape[1]}, rather than the expected 2"
+            assert (
+                grad_indices_mat.shape[2] == 3
+            ), f"grad_indices_mat shape[2] is {grad_indices_mat.shape[2]}, rather than the expected 3"
+
+            print(f"Shape of grad_indices_mat: {grad_indices_mat.shape}")
+
             print(f"Shape of grad_indices_y_mat: {grad_indices_y_mat.shape}")
             print(f"Shape of grad_indices_x_mat: {grad_indices_x_mat.shape}")
 
