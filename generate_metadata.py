@@ -37,7 +37,7 @@ def generate_metadata(directories, output_path, train_ratio=0.8):
 
 
 # Directory structure
-directories = {"BMA_AML": "/media/hdd3/neo/BMA_AML", "PBS": "/media/hdd3/neo/PB_slides"}
+directories = {"BMA_AML": "/media/hdd3/neo/BMA_AML", "PBS": "/media/hdd3/neo/PBS_slides"}
 
 # Output path
 output_path = os.path.expanduser("~/Documents/neo/wsi_specimen_clf_metadata.csv")
