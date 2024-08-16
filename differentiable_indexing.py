@@ -208,8 +208,6 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
                 weights_x_ceil * values_ceil_floor + weights_x_floor * values_ceil_ceil
             )
 
-            print(interpolated_y_floor.shape, interpolated_y_ceil.shape)
-
             output = (
                 weights_y_ceil * interpolated_y_floor
                 + weights_y_floor * interpolated_y_ceil
@@ -267,11 +265,20 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             print(grad_indices_batch[-1].shape)
             print(len(grad_indices_batch))
 
+            # the current shape is torch.Size([Nk, 2, 1, 3]), we need to make it torch.Size([Nk, 2, 3])
+            for i in range(len(grad_indices_batch)):
+                grad_indices_batch[i] = grad_indices_batch[i].squeeze(2)
+
+            grad_indices_stacked = torch.stack(grad_indices_batch, dim=0)
+
+            print(grad_indices_stacked.shape)
+            print(grad_indices_stacked.device)
+
         # No gradient for indexable_objs
         grad_indexable_objs = None
 
         # Stack gradients for the batch
-        return grad_indexable_objs, torch.stack(grad_indices_batch)
+        return grad_indexable_objs, grad_indices_stacked
 
 
 # Example use in your model
