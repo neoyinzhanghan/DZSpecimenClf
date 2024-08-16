@@ -126,34 +126,37 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             indices_x_ceil = torch.ceil(indices[:, 1]).long()
 
             # Extract values at floor and ceil indices
-            values_floor_floor = torch.tensor(
+            values_floor_floor = torch.stack(
                 [
-                    indexable_obj[indices_y_floor[j], indices_x_floor[j]]
+                    indexable_obj[indices_y_floor[j], indices_x_floor[j]].unsqueeze(0)
                     for j in range(len(indices))
                 ],
-                dtype=torch.float32,
-            ).to(device)
-            values_floor_ceil = torch.tensor(
+                dim=0,
+            )
+
+            values_floor_ceil = torch.stack(
                 [
-                    indexable_obj[indices_y_floor[j], indices_x_ceil[j]]
+                    indexable_obj[indices_y_floor[j], indices_x_ceil[j]].unsqueeze(0)
                     for j in range(len(indices))
                 ],
-                dtype=torch.float32,
-            ).to(device)
-            values_ceil_floor = torch.tensor(
+                dim=0,
+            )
+
+            values_ceil_floor = torch.stack(
                 [
-                    indexable_obj[indices_y_ceil[j], indices_x_floor[j]]
+                    indexable_obj[indices_y_ceil[j], indices_x_floor[j]].unsqueeze(0)
                     for j in range(len(indices))
                 ],
-                dtype=torch.float32,
-            ).to(device)
-            values_ceil_ceil = torch.tensor(
+                dim=0,
+            )
+
+            values_ceil_ceil = torch.stack(
                 [
-                    indexable_obj[indices_y_ceil[j], indices_x_ceil[j]]
+                    indexable_obj[indices_y_ceil[j], indices_x_ceil[j]].unsqueeze(0)
                     for j in range(len(indices))
                 ],
-                dtype=torch.float32,
-            ).to(device)
+                dim=0,
+            )
 
             # Save tensors for backward pass
             saved_tensors.extend(
