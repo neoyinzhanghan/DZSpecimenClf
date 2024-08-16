@@ -8,7 +8,7 @@ import ray
 ray.init()
 
 # Directory containing the .ndpi files
-input_dir = '/media/hdd3/neo/BMA_AML'
+input_dir = '/media/hdd3/neo/PB_slides'
 
 # Define an actor class to process .ndpi files
 @ray.remote
