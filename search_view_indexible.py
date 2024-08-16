@@ -45,9 +45,11 @@ class SearchViewIndexible:
             0 <= idx[1] < self.search_view_width
         ), f"x: {idx[1]} is out of range of the search view width: {self.search_view_width}"
 
+        slide = openslide.OpenSlide(self.wsi_path)
+
         y, x = idx
         # Extracting a region of 1x1 pixels
-        region = self.slide.read_region(
+        region = slide.read_region(
             (
                 int(x * (2**self.search_view_level)),
                 int(y * (2**self.search_view_level)),
