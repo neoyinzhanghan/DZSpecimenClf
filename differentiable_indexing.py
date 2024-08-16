@@ -182,11 +182,18 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
                 2
             )  # Shape: [Nk, 1, 1]
 
-            print(weights_x_ceil.shape)
-            print(values_floor_floor.shape)
+            # print(weights_x_ceil.shape)
+            # print(values_floor_floor.shape)
 
-            print(weights_x_floor.device)
-            print(values_floor_floor.device)
+            # print(weights_x_floor.device)
+            # print(values_floor_floor.device)
+
+            # move values_floor_floor to the same device as weights_x_ceil
+            values_floor_floor = values_floor_floor.to(weights_x_ceil.device)
+            # do the same for the rest of the values
+            values_floor_ceil = values_floor_ceil.to(weights_x_ceil.device)
+            values_ceil_floor = values_ceil_floor.to(weights_x_ceil.device)
+            values_ceil_ceil = values_ceil_ceil.to(weights_x_ceil.device)
 
             # the shape of the weights_x_ceil is torch.Size([Nk]) and the shape of the values_floor_floor is torch.Size([Nk, 1, 3])
 
