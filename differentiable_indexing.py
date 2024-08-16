@@ -120,7 +120,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
 
         # current output has shape [b, Nk, 1, 3], we need to make it torch.Size([b, Nk, 3])
         for i in range(len(output_batch)):
-            output_batch[i] = output_batch[i].squeeze(2)
+            output_batch[i] = output_batch[i].squeeze(1)
             print(output_batch[i].shape)
 
         output = torch.stack(output_batch, dim=0)
