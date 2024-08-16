@@ -176,12 +176,16 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             )
 
             # stack the gradients for y and x along the dim 1
-            grad_indices_y_mat = grad_indices_y_mat.unsqueeze(1)
-
-            grad_indices_x_mat = grad_indices_x_mat.unsqueeze(1)
 
             print(f"Shape of grad_indices_y_mat: {grad_indices_y_mat.shape}")
             print(f"Shape of grad_indices_x_mat: {grad_indices_x_mat.shape}")
+
+            # stack the gradients for y and x along the dim 1
+            grad_indices_mat = torch.stack(
+                [grad_indices_y_mat, grad_indices_x_mat], dim=1
+            )
+
+            print(f"Shape of grad_indices_mat: {grad_indices_mat.shape}")
 
             print(f"Shape of grad_output: {grad_output.shape}")
             print(f"Shape of indices: {indices.shape}")
