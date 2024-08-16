@@ -77,6 +77,9 @@ class DZSpecimenClf(nn.Module):
         # apply differentiable indexing
         x = differentiable_index_2d_batch(search_view_indexibles, x)
 
+        # reshape the indexing_output to have the shape (b, N*k, 3) from (b, N*k, 1, 3)
+        x = x.view(-1, self.N * self.k, 3)
+
         # assert the indexing_output is of the correct shape
         assert (
             x.shape[1] == self.N * self.k
