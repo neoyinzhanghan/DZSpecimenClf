@@ -127,8 +127,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
 
         # Stack output for the batch
         return output
-
-
+    
     @staticmethod
     def backward(ctx, grad_output_batch):
         saved_tensors = ctx.saved_tensors
@@ -188,7 +187,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
         # Depending on your needs, you might use squeeze, view, or reshape
         # Here, I assume you want to reduce it to [batch_size, N*k, 2]
         if len(grad_indices_stacked.shape) > 3:
-            grad_indices_stacked = grad_indices_stacked.view(batch_size, self.N * self.k, 2)
+            grad_indices_stacked = grad_indices_stacked.view(batch_size, 4 * 9, 2)
             print(f"Reshaped grad_indices shape: {grad_indices_stacked.shape}")
 
         # No gradient for indexable_objs
