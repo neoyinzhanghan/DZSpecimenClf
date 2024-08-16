@@ -44,11 +44,11 @@ class DZSpecimenClf(nn.Module):
         x = self.sigmoid(x)
 
         search_view_heights = [
-            search_view_indexible.search_view_height
+            search_view_indexible.search_view_height - 1
             for search_view_indexible in search_view_indexibles
         ]
         search_view_widths = [
-            search_view_indexible.search_view_width
+            search_view_indexible.search_view_width - 1
             for search_view_indexible in search_view_indexibles
         ]
 
