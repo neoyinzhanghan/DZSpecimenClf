@@ -80,10 +80,10 @@ class DZSpecimenClf(nn.Module):
         # assert the indexing_output is of the correct shape [b, N*k, 3]
         assert (
             x.shape[1] == self.N * self.k
-        ), f"Output shape is {x.shape}, rather than the expected ({self.N * self.k})"
+        ), f"Output shape[1] is {x.shape[1]}, rather than the expected ({self.N * self.k})"
         assert (
             x.shape[2] == 3
-        ), f"Output shape is {x.shape}, rather than the expected (3)"
+        ), f"Output shape is {x.shape[2]}, rather than the expected (3)"
 
         # reshape the indexing_output to have the shape (b, N, k, 3)
         x = x.view(x.shape[0], self.N, self.k, 3)

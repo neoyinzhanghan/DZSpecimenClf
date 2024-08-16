@@ -174,8 +174,6 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
 
         grad_indices_stacked = torch.stack(grad_indices_batch, dim=0)
 
-        print(grad_indices_stacked.shape)
-
         # No gradient for indexable_objs
         grad_indexable_objs = None
 
