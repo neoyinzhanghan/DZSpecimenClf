@@ -37,8 +37,13 @@ def ndpi_to_data(ndpi_path):
     return top_view_image, search_view_indexible
 
 
+default_transform = transforms.Compose(
+    [transforms.Resize((224, 224)), transforms.ToTensor()]
+)
+
+
 class NDPI_Dataset(Dataset):
-    def __init__(self, metadata_file, split=None, transforms=None):
+    def __init__(self, metadata_file, split=None, transforms=default_transform):
         """
         Args:
             metadata_file (string): Path to the csv file with annotations.
@@ -72,6 +77,11 @@ class NDPI_Dataset(Dataset):
         ndpi_path = self.metadata.iloc[idx]["ndpi_path"]
         class_index = self.metadata.iloc[idx]["class_index"]
         top_view_image, search_view_indexible = ndpi_to_data(ndpi_path)
+
+        if self.transforms:
+            top_view_image = self.transforms(top_view_image)
+
+        return top_view_image, search_view_indexible, class_index
 
 
 def custom_collate_fn(batch):
