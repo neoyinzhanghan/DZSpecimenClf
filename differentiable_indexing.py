@@ -178,7 +178,6 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             # the current shape is [Nk, 1, 3], we need to make it torch.Size([Nk, 3])
             grad_indices_y_mat = grad_indices_y_mat.squeeze(1)
             grad_indices_x_mat = grad_indices_x_mat.squeeze(1)
-            
 
             print(f"Shape of grad_indices_y_mat: {grad_indices_y_mat.shape}")
             print(f"Shape of grad_indices_x_mat: {grad_indices_x_mat.shape}")
@@ -193,11 +192,12 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             print(f"Shape of grad_output: {grad_output.shape}")
             print(f"Shape of indices: {indices.shape}")
 
-            grad_indices_y = torch.sum(grad_indices_y_mat * grad_output, dim=2)
-            grad_indices_x = torch.sum(grad_indices_x_mat * grad_output, dim=2)
+            # grad_output has shape [Nk, 3], indices_mat has shape [Nk, 2, 3]
 
-            # Combine gradients for y and x
-            grad_indices = torch.stack([grad_indices_y, grad_indices_x], dim=1)
+            grad_indices = torch.einsum("nk,nk->n", grad_output, grad_indices_mat)
+
+            print(f"Shape of grad_indices: {grad_indices.shape}")
+
             grad_indices_batch.append(grad_indices)
 
         # Ensure consistent shapes before stacking
