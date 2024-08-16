@@ -243,6 +243,21 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             ) = saved_tensors[i : i + num_saved_tensors_per_item]
             grad_output = grad_output_batch[i // num_saved_tensors_per_item]
 
+            print(grad_output.shape)
+            print(
+                values_floor_floor.shape,
+                values_floor_ceil.shape,
+                values_ceil_floor.shape,
+                values_ceil_ceil.shape,
+            )
+            print(
+                grad_output.device,
+                values_floor_floor.device,
+                values_floor_ceil.device,
+                values_ceil_floor.device,
+                values_ceil_ceil.device,
+            )
+
             # Calculate gradients for indices
             grad_indices_y = (
                 (values_ceil_floor + values_ceil_ceil)
