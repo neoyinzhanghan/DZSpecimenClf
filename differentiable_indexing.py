@@ -128,6 +128,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
         # Stack output for the batch
         return output
 
+
     @staticmethod
     def backward(ctx, grad_output_batch):
         saved_tensors = ctx.saved_tensors
@@ -162,11 +163,6 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             values_ceil_floor = values_ceil_floor.to(grad_output.device)
             values_ceil_ceil = values_ceil_ceil.to(grad_output.device)
 
-            print(f"Values floor floor shape: {values_floor_floor.shape}")
-            print(f"Values floor ceil shape: {values_floor_ceil.shape}")
-            print(f"Values ceil floor shape: {values_ceil_floor.shape}")
-            print(f"Values ceil ceil shape: {values_ceil_ceil.shape}")
-
             # Calculate gradients for indices
             grad_indices_y = (
                 (values_ceil_floor + values_ceil_ceil)
@@ -181,25 +177,25 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             grad_indices = torch.stack([grad_indices_y, grad_indices_x], dim=1)
             grad_indices_batch.append(grad_indices)
 
-        # Ensure consistent shapes before stacking
-        for i in range(len(grad_indices_batch)):
-            print(grad_indices_batch[i].shape)
-            grad_indices_batch[i] = grad_indices_batch[i].squeeze()
-
-            print(grad_indices_batch[i].shape)
-
+        # Stack gradients across the batch
         grad_indices_stacked = torch.stack(grad_indices_batch, dim=0)
 
-        print(f"Stacked grad_indices shape: {grad_indices_stacked.shape}")
+        print(
+            f"Stacked grad_indices shape before squeeze/reshape: {grad_indices_stacked.shape}"
+        )
+
+        # Reshape or squeeze to match the expected output dimensions
+        # Depending on your needs, you might use squeeze, view, or reshape
+        # Here, I assume you want to reduce it to [batch_size, N*k, 2]
+        if len(grad_indices_stacked.shape) > 3:
+            grad_indices_stacked = grad_indices_stacked.view(batch_size, self.N * self.k, 2)
+            print(f"Reshaped grad_indices shape: {grad_indices_stacked.shape}")
 
         # No gradient for indexable_objs
         grad_indexable_objs = None
 
-        # Stack gradients for the batch
-        return (
-            grad_indexable_objs,
-            grad_indices_stacked,
-        )
+        # Return the gradients, ensure the shape is compatible
+        return grad_indexable_objs, grad_indices_stacked
 
 
 # Example use in your model
