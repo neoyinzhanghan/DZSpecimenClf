@@ -53,12 +53,15 @@ def distribute_tasks(ndpi_file):
 
 # Use tqdm to track the progress
 results = []
-for ndpi_file in tqdm(ndpi_files, desc="Processing NDPI files"):
-    ndpi_file_path = os.path.join(input_dir, ndpi_file)
-    results.append(distribute_tasks(ndpi_file_path))
-
-# Wait for all tasks to complete
-ray.get(results)
+with tqdm(total=len(ndpi_files), desc="Processing NDPI files") as pbar:
+    for ndpi_file in ndpi_files:
+        ndpi_file_path = os.path.join(input_dir, ndpi_file)
+        results.append(distribute_tasks(ndpi_file_path))
+        
+        # Update the progress bar after each task completes
+        completed_tasks = ray.get(results)
+        pbar.update(len(completed_tasks))
+        results.clear()  # Clear the results to ensure each update is only for the latest batch
 
 print("Processing completed.")
 
