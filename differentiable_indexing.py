@@ -265,6 +265,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
 
             # print the shape of the grad_indices_batch
             print(grad_indices_batch[-1].shape)
+            print(len(grad_indices_batch))
 
         # No gradient for indexable_objs
         grad_indexable_objs = None
