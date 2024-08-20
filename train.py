@@ -163,7 +163,7 @@ def main():
     # Instantiate model, loss, optimizer, and metrics
     model = SpecimenClassifier(N, k, num_classes).to(device)
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = AdamW(model.parameters(), lr=1e-5)
+    optimizer = AdamW(model.parameters(), lr=1e-6)
     scheduler = CosineAnnealingLR(optimizer, T_max=10)
 
     accuracy = Accuracy(num_classes=num_classes, task="multiclass").to(device)
