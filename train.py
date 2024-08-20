@@ -80,7 +80,17 @@ def train(
 
 
 def validate(
-    model, dataloader, loss_fn, accuracy, auroc, f1_score, device, writer, epoch, best_metric, save_path
+    model,
+    dataloader,
+    loss_fn,
+    accuracy,
+    auroc,
+    f1_score,
+    device,
+    writer,
+    epoch,
+    best_metric,
+    save_path,
 ):
     model.eval()
     total_loss = 0
@@ -123,7 +133,9 @@ def validate(
     writer.add_scalar("val_f1", avg_f1, epoch)
 
     # Check if this is the best performance so far
-    current_metric = avg_accuracy  # or avg_auroc, avg_f1 depending on which metric you prefer
+    current_metric = (
+        avg_accuracy  # or avg_auroc, avg_f1 depending on which metric you prefer
+    )
     if current_metric > best_metric:
         print(f"New best model found! Saving to {save_path}")
         torch.save(model.state_dict(), save_path)
@@ -151,7 +163,7 @@ def main():
     # Instantiate model, loss, optimizer, and metrics
     model = SpecimenClassifier(N, k, num_classes).to(device)
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = AdamW(model.parameters(), lr=1e-3)
+    optimizer = AdamW(model.parameters(), lr=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=10)
 
     accuracy = Accuracy(num_classes=num_classes, task="multiclass").to(device)
@@ -181,7 +193,17 @@ def main():
 
         print("Validation")
         best_metric = validate(
-            model, val_loader, loss_fn, accuracy, auroc, f1_score, device, writer, epoch, best_metric, save_path
+            model,
+            val_loader,
+            loss_fn,
+            accuracy,
+            auroc,
+            f1_score,
+            device,
+            writer,
+            epoch,
+            best_metric,
+            save_path,
         )
         scheduler.step()
 
