@@ -73,6 +73,8 @@ class DZSpecimenClf(nn.Module):
         y_scaled = x[..., 1].unsqueeze(-1) * search_view_widths_tensor
 
         # now stack the x_scaled and y_scaled tensors along the last dimension
+        print(x_scaled.shape)
+        print(y_scaled.shape)
         xy = torch.stack([x_scaled, y_scaled], dim=-1)
 
         print(xy.shape)
