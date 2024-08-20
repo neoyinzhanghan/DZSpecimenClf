@@ -163,7 +163,7 @@ def main():
     # Instantiate model, loss, optimizer, and metrics
     model = SpecimenClassifier(N, k, num_classes).to(device)
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = AdamW(model.parameters(), lr=1e-4)
+    optimizer = AdamW(model.parameters(), lr=1e-5)
     scheduler = CosineAnnealingLR(optimizer, T_max=10)
 
     accuracy = Accuracy(num_classes=num_classes, task="multiclass").to(device)
@@ -174,7 +174,7 @@ def main():
     writer = SummaryWriter("runs/my_model")
 
     # Training loop
-    num_epochs = 1
+    num_epochs = 5
     best_metric = 0.0  # Initialize best metric
     for epoch in tqdm(range(num_epochs), desc="Epochs"):
         print(f"Epoch {epoch} training ... ")
