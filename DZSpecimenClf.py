@@ -72,6 +72,9 @@ class DZSpecimenClf(nn.Module):
         # Instead of modifying x directly, create new tensors for the modified values
         x_scaled = x.clone()  # Clone x to avoid inplace modification
 
+        # print the shape of x_scaled and the shape of search_view_heights_tensor
+        print(x_scaled.shape, search_view_heights_tensor.shape)
+
         x_scaled[:, :, 0] = x[:, :, 0] * search_view_heights_tensor
         x_scaled[:, :, 1] = x[:, :, 1] * search_view_widths_tensor
 
