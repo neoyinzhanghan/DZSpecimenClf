@@ -147,8 +147,8 @@ def validate(
 def main():
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
     batch_size = 1
-    N = 4  # Example value
-    k = 9  # Example value
+    N = 16  # Example value
+    k = 16  # Example value
     num_classes = 2  # Number of classes in your dataset
     save_path = "best_model.pth"
 
