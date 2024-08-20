@@ -174,7 +174,7 @@ def main():
     writer = SummaryWriter("runs/my_model")
 
     # Training loop
-    num_epochs = 5
+    num_epochs = 50
     best_metric = 0.0  # Initialize best metric
     for epoch in tqdm(range(num_epochs), desc="Epochs"):
         print(f"Epoch {epoch} training ... ")
