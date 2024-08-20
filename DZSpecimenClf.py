@@ -75,8 +75,8 @@ class DZSpecimenClf(nn.Module):
         # print the shape of x_scaled and the shape of search_view_heights_tensor
         print(x_scaled.shape, search_view_heights_tensor.shape)
 
-        x_scaled[:, :, 0] = x[:, :, 0] * search_view_heights_tensor
-        x_scaled[:, :, 1] = x[:, :, 1] * search_view_widths_tensor
+        x_scaled = x[..., 0].unsqueeze(-1) * search_view_heights_tensor
+        x_scaled = x[..., 1].unsqueeze(-1) * search_view_widths_tensor
 
         # Continue with x_scaled instead of x
         x = differentiable_index_2d_batch(search_view_indexibles, x_scaled)
