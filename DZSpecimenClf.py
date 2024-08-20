@@ -69,19 +69,19 @@ class DZSpecimenClf(nn.Module):
         # Scale x by multiplying the y and x coordinates by the respective dimensions
         # First column of x are y coordinates, second column are x coordinates
 
-        # Instead of modifying x directly, create new tensors for the modified values
-        x_scaled = x.clone()  # Clone x to avoid inplace modification
-
         # print the shape of x_scaled and the shape of search_view_heights_tensor
         print(x_scaled.shape, search_view_heights_tensor.shape)
 
         x_scaled = x[..., 0].unsqueeze(-1) * search_view_heights_tensor
-        x_scaled = x[..., 1].unsqueeze(-1) * search_view_widths_tensor
+        y_scaled = x[..., 1].unsqueeze(-1) * search_view_widths_tensor
 
-        print(x_scaled.shape)
+        # now stack the x_scaled and y_scaled tensors along the last dimension
+        xy = torch.stack([x_scaled, y_scaled], dim=-1)
+
+        print(xy.shape)
 
         # Continue with x_scaled instead of x
-        x = differentiable_index_2d_batch(search_view_indexibles, x_scaled)
+        x = differentiable_index_2d_batch(search_view_indexibles, xy)
 
         # assert the indexing_output is of the correct shape [b, N*k, 3]
         assert (
