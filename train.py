@@ -80,7 +80,7 @@ def train(
 
 
 def validate(
-    model, dataloader, loss_fn, accuracy, auroc, f1_score, device, writer, epoch
+    model, dataloader, loss_fn, accuracy, auroc, f1_score, device, writer, epoch, best_metric, save_path
 ):
     model.eval()
     total_loss = 0
@@ -122,6 +122,15 @@ def validate(
     writer.add_scalar("val_auroc", avg_auroc, epoch)
     writer.add_scalar("val_f1", avg_f1, epoch)
 
+    # Check if this is the best performance so far
+    current_metric = avg_accuracy  # or avg_auroc, avg_f1 depending on which metric you prefer
+    if current_metric > best_metric:
+        print(f"New best model found! Saving to {save_path}")
+        torch.save(model.state_dict(), save_path)
+        best_metric = current_metric
+
+    return best_metric
+
 
 def main():
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
@@ -129,6 +138,7 @@ def main():
     N = 4  # Example value
     k = 9  # Example value
     num_classes = 2  # Number of classes in your dataset
+    save_path = "best_model.pth"
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -153,6 +163,7 @@ def main():
 
     # Training loop
     num_epochs = 1
+    best_metric = 0.0  # Initialize best metric
     for epoch in tqdm(range(num_epochs), desc="Epochs"):
         print(f"Epoch {epoch} training ... ")
         train(
@@ -169,8 +180,8 @@ def main():
         )
 
         print("Validation")
-        validate(
-            model, val_loader, loss_fn, accuracy, auroc, f1_score, device, writer, epoch
+        best_metric = validate(
+            model, val_loader, loss_fn, accuracy, auroc, f1_score, device, writer, epoch, best_metric, save_path
         )
         scheduler.step()
 
