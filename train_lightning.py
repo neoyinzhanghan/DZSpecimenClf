@@ -86,7 +86,10 @@ def main():
 
     # Trainer
     trainer = pl.Trainer(
-        max_epochs=50, gpus=3 if torch.cuda.is_available() else 0, log_every_n_steps=10
+        max_epochs=50,
+        devices=3 if torch.cuda.is_available() else 0,
+        log_every_n_steps=2,
+        accelerator="gpu",
     )
     trainer.fit(model, datamodule=data_module)
 
