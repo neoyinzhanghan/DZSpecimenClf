@@ -3,6 +3,8 @@ import torch.nn as nn
 from torchvision import models
 from torchvision.models import ResNeXt50_32X4D_Weights
 from differentiable_indexing import differentiable_index_2d_batch
+from PIL import ImageDraw
+from torchvision import transforms
 
 
 class DZSpecimenClf(nn.Module):
@@ -192,3 +194,42 @@ class DZSpecimenClf(nn.Module):
         xy = torch.stack([x_scaled, y_scaled], dim=-1)
 
         return xy
+
+    def visualize_sampling_points(self, topview_image_tensor, search_view_indexibles):
+        xy = self.sampling_points(topview_image_tensor, search_view_indexibles)
+
+        # annotate the points xy as red dots on the each images in the topview_image_tensor
+        # return a list of PIL images with the annotated points
+
+        # need to downsize the coordinates by a factor of 2**4
+
+        # downsample the coordinates by a factor of 2**4
+        xy = xy / 2**4
+
+        # convert the tensor to a list of numpy arrays
+        xy = xy.cpu().numpy()
+
+        # convert the tensor to a list of PIL images
+        topview_images = [
+            transforms.ToPILImage()(topview_image)
+            for topview_image in topview_image_tensor
+        ]
+
+        # draw the points on the images
+        annotated_images = []
+
+        for topview_image, xy_points in zip(topview_images, xy):
+            draw = ImageDraw.Draw(topview_image)
+            for xy_point in xy_points:
+                draw.ellipse(
+                    (
+                        xy_point[1] - 2,
+                        xy_point[0] - 2,
+                        xy_point[1] + 2,
+                        xy_point[0] + 2,
+                    ),
+                    fill="red",
+                )
+            annotated_images.append(topview_image)
+
+        return annotated_images

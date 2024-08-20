@@ -125,7 +125,7 @@ def validate(
 
 def main():
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
-    batch_size = 3
+    batch_size = 16
     N = 4  # Example value
     k = 9  # Example value
     num_classes = 2  # Number of classes in your dataset
@@ -152,7 +152,7 @@ def main():
     writer = SummaryWriter("runs/my_model")
 
     # Training loop
-    num_epochs = 50
+    num_epochs = 5
     for epoch in tqdm(range(num_epochs), desc="Epochs"):
         print(f"Epoch {epoch} training ... ")
         train(
