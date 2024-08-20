@@ -152,7 +152,7 @@ def main():
     writer = SummaryWriter("runs/my_model")
 
     # Training loop
-    num_epochs = 5
+    num_epochs = 1
     for epoch in tqdm(range(num_epochs), desc="Epochs"):
         print(f"Epoch {epoch} training ... ")
         train(
