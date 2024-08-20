@@ -61,9 +61,9 @@ class_0_augmentation = A.Compose(
         A.OneOf(
             [  # RandomCrop only sometimes
                 A.RandomCrop(width=224, height=224, p=1.0),
-                A.NoOp(),  # No operation, keep the resized image
+                A.Resize(height=224, width=224, p=1.0),  # No operation, keep the resized image
             ],
-            p=0.7,
+            p=0.5,
         ),  # 70% chance to apply RandomCrop
         A.HorizontalFlip(p=0.5),
         A.VerticalFlip(p=0.5),
