@@ -69,9 +69,6 @@ class DZSpecimenClf(nn.Module):
         # Scale x by multiplying the y and x coordinates by the respective dimensions
         # First column of x are y coordinates, second column are x coordinates
 
-        # print the shape of x_scaled and the shape of search_view_heights_tensor
-        print(x_scaled.shape, search_view_heights_tensor.shape)
-
         x_scaled = x[..., 0].unsqueeze(-1) * search_view_heights_tensor
         y_scaled = x[..., 1].unsqueeze(-1) * search_view_widths_tensor
 
