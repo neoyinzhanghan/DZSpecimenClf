@@ -57,19 +57,16 @@ def ndpi_to_data(ndpi_path):
 # Define augmentations
 class_0_augmentation = A.Compose(
     [
-        A.Resize(height=256, width=256, p=1.0),  # Always resize first
-        A.OneOf(
-            [  # RandomCrop only sometimes
-                A.RandomCrop(width=224, height=224, p=1.0),
-                A.Resize(height=224, width=224, p=1.0),  # No operation, keep the resized image
-            ],
-            p=0.5,
-        ),  # 70% chance to apply RandomCrop
+        A.Resize(height=224, width=224, p=1.0),  # Always resize first
         A.HorizontalFlip(p=0.5),
         A.VerticalFlip(p=0.5),
         A.Rotate(limit=45, p=0.7),
         A.RandomBrightnessContrast(p=0.7),
         A.GaussianBlur(p=0.5),
+        # now apply contrast and color augmentation
+        A.ColorJitter(p=0.5),
+        A.RandomContrast(p=0.5),
+        A.RandomGamma(p=0.5),
         ToTensorV2(),
     ]
 )
@@ -79,7 +76,8 @@ class_1_augmentation = A.Compose(
         A.Resize(
             height=224, width=224, p=1.0
         ),  # Resize only, no RandomCrop for class 1
-        A.HorizontalFlip(p=0.3),
+        A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.5),
         ToTensorV2(),
     ]
 )
