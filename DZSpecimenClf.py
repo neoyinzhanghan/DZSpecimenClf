@@ -75,7 +75,7 @@ class DZSpecimenClf(nn.Module):
         # now stack the x_scaled and y_scaled tensors along the last dimension
         xy = torch.stack([x_scaled, y_scaled], dim=-1)
 
-        print(xy.shape)
+        # print(xy.shape)
 
         # Continue with x_scaled instead of x
         x = differentiable_index_2d_batch(search_view_indexibles, xy)
