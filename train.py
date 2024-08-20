@@ -146,7 +146,7 @@ def validate(
 
 def main():
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
-    batch_size = 8
+    batch_size = 16
     N = 8  # Example value
     k = 16  # Example value
     num_classes = 2  # Number of classes in your dataset
@@ -163,7 +163,7 @@ def main():
     # Instantiate model, loss, optimizer, and metrics
     model = SpecimenClassifier(N, k, num_classes).to(device)
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = AdamW(model.parameters(), lr=1e-5)
+    optimizer = AdamW(model.parameters(), lr=1e-4)
     scheduler = CosineAnnealingLR(optimizer, T_max=10)
 
     accuracy = Accuracy(num_classes=num_classes, task="multiclass").to(device)
