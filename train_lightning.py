@@ -73,9 +73,9 @@ class SpecimenDataModule(NDPI_DataModule):
 
 def main():
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
-    batch_size = 1
-    N = 5  # Example value
-    k = 9  # Example value
+    batch_size = 32
+    N = 32  # Example value
+    k = 25  # Example value
     num_classes = 2  # Number of classes in your dataset
 
     # Data Module
