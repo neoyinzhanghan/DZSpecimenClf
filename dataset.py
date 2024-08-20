@@ -131,6 +131,9 @@ class NDPI_Dataset(Dataset):
 
         top_view_image = augmented["image"]
 
+        # make sure it is a float tensor
+        top_view_image = top_view_image.float()
+
         return top_view_image, search_view_indexible, class_index
 
 
