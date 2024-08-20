@@ -155,7 +155,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Instantiate dataset and dataloaders
-    data_module = NDPI_DataModule(metadata_file, batch_size, num_workers=12)
+    data_module = NDPI_DataModule(metadata_file, batch_size, num_workers=64)
     data_module.setup()
     train_loader = data_module.train_dataloader()
     val_loader = data_module.val_dataloader()
