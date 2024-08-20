@@ -8,6 +8,10 @@ from PIL import Image
 from torchvision import transforms
 from search_view_indexible import SearchViewIndexible
 from torch.utils.data import DataLoader
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+from PIL import Image
+import numpy as np
 
 
 def ndpi_to_data(ndpi_path):
@@ -50,23 +54,53 @@ def ndpi_to_data(ndpi_path):
     return top_view_image, search_view_indexible
 
 
-default_transform = transforms.Compose(
-    [transforms.Resize((224, 224)), transforms.ToTensor()]
+# Define augmentations
+class_0_augmentation = A.Compose(
+    [
+        A.Resize(height=256, width=256, p=1.0),  # Always resize first
+        A.OneOf(
+            [  # RandomCrop only sometimes
+                A.RandomCrop(width=224, height=224, p=1.0),
+                A.NoOp(),  # No operation, keep the resized image
+            ],
+            p=0.7,
+        ),  # 70% chance to apply RandomCrop
+        A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.5),
+        A.Rotate(limit=45, p=0.7),
+        A.RandomBrightnessContrast(p=0.7),
+        A.GaussianBlur(p=0.5),
+        ToTensorV2(),
+    ]
+)
+
+class_1_augmentation = A.Compose(
+    [
+        A.Resize(
+            height=224, width=224, p=1.0
+        ),  # Resize only, no RandomCrop for class 1
+        A.HorizontalFlip(p=0.3),
+        ToTensorV2(),
+    ]
 )
 
 
 class NDPI_Dataset(Dataset):
-    def __init__(self, metadata_file, split=None, transforms=default_transform):
+    def __init__(
+        self, metadata_file, split=None, class_0_transform=None, class_1_transform=None
+    ):
         """
         Args:
             metadata_file (string): Path to the csv file with annotations.
             split (string): One of {'train', 'val', 'test'}, which part of the dataset to load.
-            transforms (callable, optional): Optional transform to be applied on a sample.
+            class_0_transform (callable, optional): Transform to be applied to class 0 samples.
+            class_1_transform (callable, optional): Transform to be applied to class 1 samples.
         """
         self.metadata = pd.read_csv(metadata_file)
         if split:
             self.metadata = self.metadata[self.metadata["split"] == split]
-        self.transforms = transforms
+        self.class_0_transform = class_0_transform or class_0_augmentation
+        self.class_1_transform = class_1_transform or class_1_augmentation
         self.class_weights = self._compute_class_weights()
 
     def _compute_class_weights(self):
@@ -91,8 +125,13 @@ class NDPI_Dataset(Dataset):
         class_index = self.metadata.iloc[idx]["class_index"]
         top_view_image, search_view_indexible = ndpi_to_data(ndpi_path)
 
-        if self.transforms:
-            top_view_image = self.transforms(top_view_image)
+        # Apply the appropriate augmentation based on class index
+        if class_index == 0:
+            augmented = self.class_0_transform(image=np.array(top_view_image))
+        else:
+            augmented = self.class_1_transform(image=np.array(top_view_image))
+
+        top_view_image = augmented["image"]
 
         return top_view_image, search_view_indexible, class_index
 
@@ -134,14 +173,19 @@ class NDPI_DataModule(pl.LightningDataModule):
         # Assuming you have a column 'split' in your CSV that contains 'train'/'val' labels
         if stage in (None, "fit"):
             self.train_dataset = NDPI_Dataset(
-                self.metadata_file, split="train", transforms=self.transform
+                self.metadata_file,
+                split="train",
+                class_0_transform=class_0_augmentation,
+                class_1_transform=class_1_augmentation,
             )
             self.val_dataset = NDPI_Dataset(
-                self.metadata_file, split="val", transforms=self.transform
+                self.metadata_file,
+                split="val",
             )
-        if stage in (None, "test", "predict"):
+        if stage in (None, "test"):
             self.test_dataset = NDPI_Dataset(
-                self.metadata_file, split="val", transforms=self.transform
+                self.metadata_file,
+                split="val",
             )
 
     def train_dataloader(self):
