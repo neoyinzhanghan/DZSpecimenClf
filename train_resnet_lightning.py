@@ -4,15 +4,18 @@ from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torchmetrics import Accuracy, F1Score, AUROC
 import pytorch_lightning as pl
-from DZSpecimenClf import DZSpecimenClf
+from torchvision.models import resnext50_32x4d
 from dataset import NDPI_DataModule
 
 
 class SpecimenLightningModule(pl.LightningModule):
-    def __init__(self, N, k, num_classes=2, lr=1e-4, T_max=10):
+    def __init__(self, num_classes=2, lr=1e-4, T_max=10):
         super(SpecimenLightningModule, self).__init__()
         self.save_hyperparameters()
-        self.model = DZSpecimenClf(N, k, num_classes)
+        self.model = resnext50_32x4d(pretrained=False)
+        self.model.fc = nn.Linear(
+            self.model.fc.in_features, num_classes
+        )  # Adjust the final layer for num_classes
         self.loss_fn = nn.CrossEntropyLoss()
 
         # Metrics
@@ -20,12 +23,12 @@ class SpecimenLightningModule(pl.LightningModule):
         self.f1_score = F1Score(num_classes=num_classes, task="multiclass")
         self.auroc = AUROC(num_classes=num_classes, task="multiclass")
 
-    def forward(self, topview_image_tensor, search_view_indexibles):
-        return self.model(topview_image_tensor, search_view_indexibles)
+    def forward(self, topview_image_tensor, search_view_indexibles=None):
+        return self.model(topview_image_tensor)
 
     def training_step(self, batch, batch_idx):
         topview_image, search_view_indexible, class_index = batch
-        outputs = self(topview_image, search_view_indexible)
+        outputs = self(topview_image)
         loss = self.loss_fn(outputs, class_index)
 
         # Metrics computation
@@ -43,7 +46,7 @@ class SpecimenLightningModule(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         topview_image, search_view_indexible, class_index = batch
-        outputs = self(topview_image, search_view_indexible)
+        outputs = self(topview_image)
         loss = self.loss_fn(outputs, class_index)
 
         # Metrics computation
@@ -64,7 +67,7 @@ class SpecimenLightningModule(pl.LightningModule):
 
 
 class SpecimenDataModule(NDPI_DataModule):
-    def __init__(self, metadata_file, batch_size=1, num_workers=12):
+    def __init__(self, metadata_file, batch_size=32, num_workers=12):
         super(SpecimenDataModule, self).__init__(metadata_file, batch_size, num_workers)
 
     def setup(self, stage=None):
@@ -73,16 +76,14 @@ class SpecimenDataModule(NDPI_DataModule):
 
 def main():
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
-    batch_size = 16
-    N = 16  # Example value
-    k = 9  # Example value
+    batch_size = 32
     num_classes = 2  # Number of classes in your dataset
 
     # Data Module
     data_module = SpecimenDataModule(metadata_file, batch_size)
 
     # Model
-    model = SpecimenLightningModule(N, k, num_classes)
+    model = SpecimenLightningModule(num_classes=num_classes)
 
     # Trainer
     trainer = pl.Trainer(
