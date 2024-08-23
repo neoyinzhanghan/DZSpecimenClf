@@ -70,7 +70,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
                 ]
             )
 
-            # Bilinear interpolation
+            # Bilinear interpolation # TODO okay this may not be actually correct, please fix it.
             weights_y_floor = indices[:, 0] - indices_y_floor.float().to(device)
             weights_y_ceil = indices_y_ceil.float().to(device) - indices[:, 0]
             weights_x_floor = indices[:, 1] - indices_x_floor.float().to(device)
@@ -99,7 +99,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             values_ceil_ceil = values_ceil_ceil.to(weights_x_ceil.device)
 
             # the shape of the weights_x_ceil is torch.Size([Nk]) and the shape of the values_floor_floor is torch.Size([Nk, 1, 3])
-
+            # TODO make sure you check the correctness of the linear interpolation here
             interpolated_y_floor = (
                 weights_x_ceil * values_floor_floor
                 + weights_x_floor * values_floor_ceil
@@ -160,7 +160,7 @@ class DifferentiableIndex2DBatchFunction(torch.autograd.Function):
             values_floor_floor = values_floor_floor.to(grad_output.device)
             values_floor_ceil = values_floor_ceil.to(grad_output.device)
             values_ceil_floor = values_ceil_floor.to(grad_output.device)
-            values_ceil_ceil = values_ceil_ceil.to(grad_output.device)
+            values_ceil_ceil = values_ceil_ceil.to(grad_output.device) # TODO check that this is indeed correct
 
             # print(f"Values floor floor shape: {values_floor_floor.shape}")
             # print(f"Values floor ceil shape: {values_floor_ceil.shape}")
