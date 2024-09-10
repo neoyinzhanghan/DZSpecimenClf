@@ -10,9 +10,9 @@ from tqdm import tqdm
 
 
 class SpecimenClassifier(nn.Module):
-    def __init__(self, N, k, num_classes=2):
+    def __init__(self, N, num_classes=2, patch_size=224):
         super(SpecimenClassifier, self).__init__()
-        self.model = DZSpecimenClf(N, k, num_classes)
+        self.model = DZSpecimenClf(N, num_classes=num_classes, patch_size=patch_size)
 
     def forward(self, topview_image_tensor, search_view_indexibles):
         return self.model(topview_image_tensor, search_view_indexibles)
