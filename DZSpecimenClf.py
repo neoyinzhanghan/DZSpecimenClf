@@ -138,13 +138,15 @@ def get_square_coordinates(center_tensor, square_side_length=224):
     square_coordinates = square_coordinates.repeat(b, N, 1, 1)
 
     # add the center_tensor to the square_coordinates
+    # move the square_coordinates to the same device as the center_tensor
+    square_coordinates = square_coordinates.to(center_tensor.device)
     square_coordinates = center_tensor.unsqueeze(2) + square_coordinates
 
     return square_coordinates
 
 
 class DZSpecimenClf(nn.Module):
-    def __init__(self, N, k, patch_size=224, num_classes=2):
+    def __init__(self, N, patch_size=224, num_classes=2):
         super(DZSpecimenClf, self).__init__()
         # Load the pretrained ResNeXt50 model
         self.resnext50 = models.resnext50_32x4d(pretrained=False)
