@@ -440,8 +440,8 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             if grad_output_item.dtype != torch.float32:
                 grad_output_item = grad_output_item.float()
 
-            print("grad_indices_mat shape: ", grad_indices_mat.shape)
-            print("grad_output_item shape: ", grad_output_item.shape)
+            # print("grad_indices_mat shape: ", grad_indices_mat.shape)
+            # print("grad_output_item shape: ", grad_output_item.shape)
 
             # Flatten the spatial dimensions (224 * 224 * 3 = 150528)
             grad_indices_mat_flat = grad_indices_mat.view(
