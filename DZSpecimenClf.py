@@ -192,6 +192,17 @@ class DZSpecimenClf(nn.Module):
             for search_view_indexible in search_view_indexibles
         ]
 
+        # padded_search_view_heights will be search_view_heights subtracted by patch_size
+        padded_search_view_heights = [
+            search_view_height - self.patch_size
+            for search_view_height in search_view_heights
+        ]
+        # padded_search_view_widths will be search_view_widths subtracted by patch_size
+        padded_search_view_widths = [
+            search_view_width - self.patch_size
+            for search_view_width in search_view_widths
+        ]
+
         assert (
             len(search_view_heights)
             == len(search_view_widths)
@@ -211,6 +222,10 @@ class DZSpecimenClf(nn.Module):
 
         x_scaled = (x[..., 0].unsqueeze(-1) * search_view_heights_tensor).squeeze(-1)
         y_scaled = (x[..., 1].unsqueeze(-1) * search_view_widths_tensor).squeeze(-1)
+
+        # now add patch_size // 2 to the x_scaled and y_scaled tensors
+        x_scaled = x_scaled + self.patch_size // 2
+        y_scaled = y_scaled + self.patch_size // 2
 
         # now stack the x_scaled and y_scaled tensors along the last dimension
         xy = torch.stack([x_scaled, y_scaled], dim=-1)
