@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 from torchvision.models import ResNeXt50_32X4D_Weights
-from differentiable_indexing import differentiable_index_2d_batch
+from differentiable_indexing import differentiable_crop_2d_batch
 from PIL import ImageDraw
 from torchvision import transforms
 
@@ -105,44 +105,44 @@ class MultiHeadAttentionClassifier(nn.Module):
         return class_token_output
 
 
-def get_square_coordinates(center_tensor, square_side_length=224):
-    """center_tensor is of shape [b, N, 2], where the last dimension is the center of the square.
-    Create a tensor of shape [b, N square_side_length**2, 2] where the last dimension is the coordinates of the square centered at the center_tensor with side length square_side_length.
-    The coordinates are like center - 1, center - 2, etc. to center + 1, center + 2, etc.
+# def get_square_coordinates(center_tensor, square_side_length=224):
+#     """center_tensor is of shape [b, N, 2], where the last dimension is the center of the square.
+#     Create a tensor of shape [b, N square_side_length**2, 2] where the last dimension is the coordinates of the square centered at the center_tensor with side length square_side_length.
+#     The coordinates are like center - 1, center - 2, etc. to center + 1, center + 2, etc.
 
-    preconditions:
-    - square_side_length is an even number
-    """
+#     preconditions:
+#     - square_side_length is an even number
+#     """
 
-    # assert that square_side_length is an even number
-    assert (
-        square_side_length % 2 == 0
-    ), f"square_side_length should be an even number, but is {square_side_length}"
+#     # assert that square_side_length is an even number
+#     assert (
+#         square_side_length % 2 == 0
+#     ), f"square_side_length should be an even number, but is {square_side_length}"
 
-    # get the batch size and the number of centers
-    b, N, _ = center_tensor.shape
+#     # get the batch size and the number of centers
+#     b, N, _ = center_tensor.shape
 
-    # create a tensor of shape [square_side_length, square_side_length] with the coordinates of the square
-    square_coordinates = torch.stack(
-        torch.meshgrid(
-            torch.arange(-square_side_length // 2, square_side_length // 2),
-            torch.arange(-square_side_length // 2, square_side_length // 2),
-        ),
-        dim=-1,
-    )
+#     # create a tensor of shape [square_side_length, square_side_length] with the coordinates of the square
+#     square_coordinates = torch.stack(
+#         torch.meshgrid(
+#             torch.arange(-square_side_length // 2, square_side_length // 2),
+#             torch.arange(-square_side_length // 2, square_side_length // 2),
+#         ),
+#         dim=-1,
+#     )
 
-    # reshape the square_coordinates to have the shape [1, square_side_length**2, 2]
-    square_coordinates = square_coordinates.view(1, -1, 2)
+#     # reshape the square_coordinates to have the shape [1, square_side_length**2, 2]
+#     square_coordinates = square_coordinates.view(1, -1, 2)
 
-    # create a tensor of shape [b, N, square_side_length**2, 2] with the coordinates of the square
-    square_coordinates = square_coordinates.repeat(b, N, 1, 1)
+#     # create a tensor of shape [b, N, square_side_length**2, 2] with the coordinates of the square
+#     square_coordinates = square_coordinates.repeat(b, N, 1, 1)
 
-    # add the center_tensor to the square_coordinates
-    # move the square_coordinates to the same device as the center_tensor
-    square_coordinates = square_coordinates.to(center_tensor.device)
-    square_coordinates = center_tensor.unsqueeze(2) + square_coordinates
+#     # add the center_tensor to the square_coordinates
+#     # move the square_coordinates to the same device as the center_tensor
+#     square_coordinates = square_coordinates.to(center_tensor.device)
+#     square_coordinates = center_tensor.unsqueeze(2) + square_coordinates
 
-    return square_coordinates
+#     return square_coordinates
 
 
 class DZSpecimenClf(nn.Module):
@@ -215,42 +215,16 @@ class DZSpecimenClf(nn.Module):
         # now stack the x_scaled and y_scaled tensors along the last dimension
         xy = torch.stack([x_scaled, y_scaled], dim=-1)
 
-        # now we have these centers, we need to get the square coordinates
-        # get the square coordinates
-        square_coordinates = get_square_coordinates(
-            xy, square_side_length=self.patch_size
-        )  # now it has shape [b, N, square_side_length**2, 2]
-
-        # assert the square_coordinates is of the correct shape
-        assert (
-            square_coordinates.shape[1] == self.N
-            and square_coordinates.shape[2] == self.patch_size**2
-            and square_coordinates.shape[3] == 2
-        ), f"Output shape is {square_coordinates.shape}, rather than the expected b, ({self.N}, {self.patch_size ** 2}, 2)"
-
-        # print(xy.shape)
-
-        # reshape the square_coordinates to have the shape (b, N*(patch_size**2), 2)
-        xy = square_coordinates.view(
-            square_coordinates.shape[0], -1, square_coordinates.shape[-1]
-        )
-
         # Continue with x_scaled instead of x
-        x = differentiable_index_2d_batch(search_view_indexibles, xy)
+        x = differentiable_crop_2d_batch(search_view_indexibles, xy)
 
-        # assert the indexing_output is of the correct shape [b, N*patch_size**2, 3]
-        assert x.shape[1] == self.N * (
-            self.patch_size**2
-        ), f"Output shape[1] is {x.shape[1]}, rather than the expected ({self.N * (self.patch_size**2)})"
+        # assert that x has shape [b, N, patch_size, patch_size, 3]
         assert (
-            x.shape[2] == 3
-        ), f"Output shape is {x.shape[2]}, rather than the expected (3)"
-
-        # reshape the indexing_output to have the shape (b, N, patch_size**2, 3)
-        x = x.view(x.shape[0], self.N, self.patch_size**2, 3)
-
-        # now reshape the indexing_output to have the shape (b, N, patch_size, patch_size, 3)
-        x = x.view(x.shape[0], self.N, self.patch_size, self.patch_size, 3)
+            x.shape[1] == self.N
+            and x.shape[2] == self.patch_size
+            and x.shape[3] == self.patch_size
+            and x.shape[4] == 3
+        ), f"Output shape is {x.shape}, rather than the expected (b, N, {self.patch_size}, {self.patch_size}, 3)"
 
         # now reshape the indexing_output to have the shape (b*N, patch_size, patch_size, 3)
         x = x.view(x.shape[0] * x.shape[1], self.patch_size, self.patch_size, 3)

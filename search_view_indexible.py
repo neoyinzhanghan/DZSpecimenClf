@@ -66,3 +66,54 @@ class SearchViewIndexible:
         pixel_values = pixel_values.reshape(3)  # reshape to (3,)
         # Convert to a torch tensor
         return torch.tensor(pixel_values, dtype=torch.uint8)
+
+    def crop(self, TL_x, TL_y, patch_size=224):
+        """Crop a patch from the search view indexible object.
+
+        Args:
+        TL_x (int): The x-coordinate of the top-left corner of the patch.
+        TL_y (int): The y-coordinate of the top-left corner of the patch.
+        patch_size (int): The size of the patch to crop. Defaults to 224.
+
+        Returns:
+        np.array: The RGB values of the cropped patch as a numpy array.
+        """
+        # assert that the top-left corner is in the range of the search view height and width
+        assert (
+            0 <= TL_x < self.search_view_width - patch_size
+        ), f"TL_x: {TL_x} is out of range of the search view width: {self.search_view_width}"
+        assert (
+            0 <= TL_y < self.search_view_height - patch_size
+        ), f"TL_y: {TL_y} is out of range of the search view height: {self.search_view_height}"
+
+        try:
+            slide = openslide.OpenSlide(self.wsi_path)
+        except openslide.OpenSlideError as e:
+            print(f"Error loading {self.wsi_path}: {e}")
+            raise e
+
+        # Extracting a region of 1x1 pixels
+        region = slide.read_region(
+            (
+                int(TL_x * (2**self.search_view_level)),
+                int(TL_y * (2**self.search_view_level)),
+            ),
+            self.search_view_level,
+            (patch_size, patch_size),
+        )
+
+        # if RGBA, convert to RGB
+        if region.mode == "RGBA":
+            region = region.convert("RGB")
+
+        # Convert to numpy array
+        patch = np.array(region)
+
+        # make sure the patch is of shape (patch_size, patch_size, 3)
+        assert patch.shape == (
+            patch_size,
+            patch_size,
+            3,
+        ), f"Patch shape is {patch.shape}, expected {(patch_size, patch_size, 3)}"
+
+        return torch.tensor(patch, dtype=torch.uint8)
