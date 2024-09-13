@@ -357,7 +357,7 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
                 + weights_x_floor * patches_floor_ceil
             )
 
-            # print(f"Shape of interpolated_y_floor: {interpolated_y_floor.shape}")   
+            # print(f"Shape of interpolated_y_floor: {interpolated_y_floor.shape}")
 
             interpolated_y_ceil = (
                 weights_x_ceil * patches_ceil_floor
@@ -443,18 +443,21 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             print("grad_indices_mat shape: ", grad_indices_mat.shape)
             print("grad_output_item shape: ", grad_output_item.shape)
 
-            import sys
-            sys.exit()
+            # Flatten the spatial dimensions (224 * 224 * 3 = 150528)
+            grad_indices_mat_flat = grad_indices_mat.view(
+                8, 2, -1
+            )  # Shape: [8, 2, 150528]
+            grad_output_item_flat = grad_output_item.view(8, -1)  # Shape: [8, 150528]
 
-            # grad_output has shape [len(indices), patch_size, patch_size, 3], indices_mat has shape [len(indices), 2, 3]
-            grad_indices = torch.bmm(
-                grad_indices_mat, grad_output_item.unsqueeze(-1)
-            )  # Shape: [len(indices), 2, 1]
+            # Perform batch matrix multiplication
+            output = torch.bmm(
+                grad_indices_mat_flat, grad_output_item_flat.unsqueeze(2)
+            )  # Shape: [8, 2, 1]
 
-            # Remove the last dimension to get the final gradient shape [len(indices), 2]
-            grad_indices = grad_indices.squeeze(-1)  # Shape: [len(indices), 2]
+            # Remove the last dimension to get the desired shape [8, 2]
+            output = output.squeeze(2)
 
-            grad_indices_batch.append(grad_indices)
+            grad_indices_batch.append(output)
 
         grad_indices_stacked = torch.stack(grad_indices_batch, dim=0)
 
