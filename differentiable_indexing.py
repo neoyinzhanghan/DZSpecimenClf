@@ -358,7 +358,7 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             )
 
             # print(f"Shape of interpolated_y_floor: {interpolated_y_floor.shape}")   
-            
+
             interpolated_y_ceil = (
                 weights_x_ceil * patches_ceil_floor
                 + weights_x_floor * patches_ceil_ceil
@@ -439,6 +439,12 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             # Ensure grad_output is a float tensor
             if grad_output_item.dtype != torch.float32:
                 grad_output_item = grad_output_item.float()
+
+            print("grad_indices_mat shape: ", grad_indices_mat.shape)
+            print("grad_output_item shape: ", grad_output_item.shape)
+
+            import sys
+            sys.exit()
 
             # grad_output has shape [len(indices), patch_size, patch_size, 3], indices_mat has shape [len(indices), 2, 3]
             grad_indices = torch.bmm(
