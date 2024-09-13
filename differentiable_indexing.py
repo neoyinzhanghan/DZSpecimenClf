@@ -251,11 +251,16 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             indices = indices_batch[i]
             indexable_obj = indexable_objs[i]
 
-            # calculate the TL_indices floor and ceil
-            TL_indices_y_floor = torch.floor(indices[:, 0]).long()
-            TL_indices_x_floor = torch.floor(indices[:, 1]).long()
-            TL_indices_y_ceil = torch.ceil(indices[:, 0]).long()
-            TL_indices_x_ceil = torch.ceil(indices[:, 1]).long()
+            central_indices_y_floor = torch.floor(indices[:, 0]).long()
+            central_indices_x_floor = torch.floor(indices[:, 1]).long()
+            central_indices_y_ceil = torch.ceil(indices[:, 0]).long()
+            central_indices_x_ceil = torch.ceil(indices[:, 1]).long()
+
+            # calculate the TL_indices floor and ceil by subtracting half of the patch size
+            TL_indices_y_floor = central_indices_y_floor - patch_size // 2
+            TL_indices_x_floor = central_indices_x_floor - patch_size // 2
+            TL_indices_y_ceil = central_indices_y_ceil - patch_size // 2
+            TL_indices_x_ceil = central_indices_x_ceil - patch_size // 2
 
             # extract the patch_size x patch_size patches
             # use indexable_obj.crop(self, TL_x, TL_y, patch_size=224) method, which returns a tensor of shape [patch_size, patch_size, 3]
