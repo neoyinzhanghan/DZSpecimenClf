@@ -332,21 +332,14 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             weights_x_floor = indices[:, 1] - TL_indices_x_floor.float().to(device)
             weights_x_ceil = TL_indices_x_ceil.float().to(device) - indices[:, 1]
 
-            weights_x_ceil = weights_x_ceil.unsqueeze(1).unsqueeze(
-                2
-            )  # Shape: [len(indices), 1, 1]
-            weights_x_floor = weights_x_floor.unsqueeze(1).unsqueeze(
-                2
-            )  # Shape: [len(indices), 1, 1]
-
-            # do the same for the rest of the weights
-            weights_y_ceil = weights_y_ceil.unsqueeze(1).unsqueeze(
-                2
-            )  # Shape: [len(indices), 1, 1]
-
-            weights_y_floor = weights_y_floor.unsqueeze(1).unsqueeze(
-                2
-            )  # Shape: [len(indices), 1, 1]
+            weights_x_ceil = weights_x_ceil.unsqueeze(1).unsqueeze(2).unsqueeze(3)
+            # Shape: [len(indices), 1, 1, 1]
+            weights_x_floor = weights_x_floor.unsqueeze(1).unsqueeze(2).unsqueeze(3)
+            # Shape: [len(indices), 1, 1, 1]
+            weights_y_ceil = weights_y_ceil.unsqueeze(1).unsqueeze(2).unsqueeze(3)
+            # Shape: [len(indices), 1, 1, 1]
+            weights_y_floor = weights_y_floor.unsqueeze(1).unsqueeze(2).unsqueeze(3)
+            # Shape: [len(indices), 1, 1, 1]
 
             # move patches_floor_floor to the same device as weights_x_ceil
             patches_floor_floor = patches_floor_floor.to(weights_x_ceil.device)
@@ -359,6 +352,7 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             print(f"Shape of weights_x_ceil: {weights_x_ceil.shape}")
 
             import sys
+
             sys.exit()
 
             # the shape of the weights_x_ceil is torch.Size([len(indices)]) and the shape of the patches_floor_floor is torch.Size([len(indices), patch_size, patch_size, 3])
