@@ -211,10 +211,10 @@ class DZSpecimenClf(nn.Module):
         ), f"Batch dim / length of search_view_heights: {len(search_view_heights)}, search_view_widths: {len(search_view_widths)}, search_view_indexibles: {len(search_view_indexibles)}, x: {x.shape[0]}"
 
         search_view_heights_tensor = (
-            torch.tensor(search_view_heights).view(-1, 1, 1).to(x.device)
+            torch.tensor(padded_search_view_heights).view(-1, 1, 1).to(x.device)
         )
         search_view_widths_tensor = (
-            torch.tensor(search_view_widths).view(-1, 1, 1).to(x.device)
+            torch.tensor(padded_search_view_widths).view(-1, 1, 1).to(x.device)
         )
         # x is a bunch of y, x coordinates there are b, N*k of them, multiply y by the search view height and x by the search view width
         # Scale x by multiplying the y and x coordinates by the respective dimensions

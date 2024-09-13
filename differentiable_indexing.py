@@ -446,7 +446,7 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             # Flatten the spatial dimensions (224 * 224 * 3 = 150528)
             grad_indices_mat_flat = grad_indices_mat.view(
                 8, 2, -1
-            )  # Shape: [8, 2, 150528]
+            )  # Shape: [8, 2, 150528] 150528 or would be whatever flatten dimension of the patch image is
             grad_output_item_flat = grad_output_item.view(8, -1)  # Shape: [8, 150528]
 
             # Perform batch matrix multiplication
