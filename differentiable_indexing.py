@@ -351,15 +351,16 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             print(f"Shape of patches_floor_floor: {patches_floor_floor.shape}")
             print(f"Shape of weights_x_ceil: {weights_x_ceil.shape}")
 
-            import sys
-
-            sys.exit()
-
             # the shape of the weights_x_ceil is torch.Size([len(indices)]) and the shape of the patches_floor_floor is torch.Size([len(indices), patch_size, patch_size, 3])
             interpolated_y_floor = (
                 weights_x_ceil * patches_floor_floor
                 + weights_x_floor * patches_floor_ceil
             )
+
+            print(f"Shape of interpolated_y_floor: {interpolated_y_floor.shape}")   
+
+            import sys
+            sys.exit()
 
             interpolated_y_ceil = (
                 weights_x_ceil * patches_ceil_floor
