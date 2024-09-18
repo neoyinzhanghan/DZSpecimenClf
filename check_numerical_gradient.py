@@ -129,6 +129,8 @@ if __name__ == "__main__":
     print("Computing numerical gradient...")
 
     model.to("cpu")
+    topview_image = topview_image.to("cpu")
+    class_index = class_index.to("cpu")
 
     # Compute numerical gradients
     numerical_gradients = compute_numerical_gradient(
@@ -138,6 +140,8 @@ if __name__ == "__main__":
     print("Computing backward gradient...")
 
     model.to(device)
+    topview_image = topview_image.to(device)
+    class_index = class_index.to(device)
 
     # Compute backward gradients
     backward_gradients = compute_backward_gradient(
