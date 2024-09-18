@@ -3,36 +3,34 @@ import numpy as np
 from scipy.optimize import approx_fprime
 
 
-def loss_fn_wrapper(model, params_flat, input_data, target_data, loss_fn):
-    """
-    Given a model, a flattened version of its parameters, input data, target data, and a loss function, this function
-    will set the parameters of the model to the unflattened version of params_flat, compute the loss using the input
-    data and target data, and return the loss.
-    """
-
-    # Unflatten parameters and set them to the model
-    start_idx = 0
-    for param in model.parameters():
-        param_shape = param.shape
-        numel = param.numel()
-        param.data = torch.tensor(
-            params_flat[start_idx : start_idx + numel].reshape(param_shape),
-            dtype=param.dtype,
-        )
-        start_idx += numel
-
-    # Compute the loss
-    topview_image, search_view_indexible = input_data
-    output = model(topview_image, search_view_indexible)
-    loss = loss_fn(output, target_data).item()
-    return loss
-
-
 def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-5):
     # Flatten model parameters into a 1D numpy array
     params_flat = np.concatenate(
         [param.detach().cpu().numpy().flatten() for param in model.parameters()]
     )
+
+    # Define the loss function wrapper
+    def loss_fn_wrapper(params_flat):
+        """
+        Given a model, a flattened version of its parameters, input data, target data, and a loss function, this function
+        will set the parameters of the model to the unflattened version of params_flat, compute the loss using the input
+        data and target data, and return the loss.
+        """
+        # Unflatten parameters and set them to the model
+        start_idx = 0
+        for param in model.parameters():
+            param_shape = param.shape
+            numel = param.numel()
+            param.data = torch.tensor(
+                params_flat[start_idx : start_idx + numel].reshape(param_shape),
+                dtype=param.dtype,
+            )
+            start_idx += numel
+
+        # Compute the loss
+        output = model(input_data)
+        loss = loss_fn(output, target_data).item()
+        return loss
 
     # Compute numerical gradient using approx_fprime
     numerical_gradient_flat = approx_fprime(params_flat, loss_fn_wrapper, epsilon)
