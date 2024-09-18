@@ -25,7 +25,7 @@ class SearchViewIndexible:
 
         self.search_view_height, self.search_view_width = openslide.OpenSlide(
             self.wsi_path
-        ).level_dimensions[self.search_view_level]
+        ).level_dimensions[self.search_view_level] #TODO
 
     def __getitem__(self, idx):
         """Retrieve a single pixel from the slide based on the (y, x) coordinates.

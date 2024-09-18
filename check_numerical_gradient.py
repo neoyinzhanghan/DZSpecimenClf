@@ -31,7 +31,7 @@ def loss_fn_wrapper(model, params_flat, input_data, target_data, loss_fn):
 def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-5):
     # Flatten model parameters into a 1D numpy array
     params_flat = np.concatenate(
-        [param.detach().numpy().flatten() for param in model.parameters()]
+        [param.detach().cpu().numpy().flatten() for param in model.parameters()]
     )
 
     # Compute numerical gradient using approx_fprime
