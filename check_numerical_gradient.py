@@ -28,7 +28,8 @@ def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=
             start_idx += numel
 
         # Compute the loss
-        output = model(input_data)
+        topview_image, search_view_indexible = input_data
+        output = model(topview_image, search_view_indexible)
         loss = loss_fn(output, target_data).item()
         return loss
 
