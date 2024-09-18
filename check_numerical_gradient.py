@@ -124,12 +124,21 @@ if __name__ == "__main__":
     batch = next(iter(train_loader))
     topview_image, search_view_indexible, class_index = batch
 
+    print("Computing numerical gradient...")
+
     # Compute numerical gradients
     numerical_gradients = compute_numerical_gradient(
         model, (topview_image, search_view_indexible), class_index, loss_fn
     )
 
+    print("Computing backward gradient...")
+
     # Compute backward gradients
     backward_gradients = compute_backward_gradient(
         model, (topview_image, search_view_indexible), class_index, loss_fn
     )
+
+    print("Comparing gradients...")
+
+    # Compare gradients
+    compare_gradients(numerical_gradients, backward_gradients)
