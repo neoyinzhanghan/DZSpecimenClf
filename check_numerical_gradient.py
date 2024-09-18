@@ -122,6 +122,11 @@ if __name__ == "__main__":
     # get the first batch of data
     batch = next(iter(train_loader))
     topview_image, search_view_indexible, class_index = batch
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    topview_image = topview_image.to(device)
+    search_view_indexible = search_view_indexible.to(device)
+    class_index = class_index.to(device)
 
     print("Computing numerical gradient...")
 
