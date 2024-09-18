@@ -1,92 +1,135 @@
 import torch
-import torch.nn.functional as F
 import numpy as np
-from DZSpecimenClf import DZSpecimenClf
+from scipy.optimize import approx_fprime
 
-def compute_numerical_gradient(model, topview_image_tensor, search_view_indexibles, param_name, param, epsilon=1e-5):
+
+def loss_fn_wrapper(model, params_flat, input_data, target_data, loss_fn):
     """
-    Compute the numerical gradient of a specific parameter in the model.
-
-    Args:
-        model (nn.Module): The model containing the parameter.
-        topview_image_tensor (torch.Tensor): Input tensor for the model.
-        search_view_indexibles (list): List of search view indexibles.
-        param_name (str): Name of the parameter for gradient checking.
-        param (torch.Tensor): Parameter tensor for gradient checking.
-        epsilon (float): Small perturbation for numerical gradient computation.
-
-    Returns:
-        torch.Tensor: Numerical gradient of the parameter.
+    Given a model, a flattened version of its parameters, input data, target data, and a loss function, this function
+    will set the parameters of the model to the unflattened version of params_flat, compute the loss using the input
+    data and target data, and return the loss.
     """
-    numerical_grad = torch.zeros_like(param)
 
-    # Iterate over all elements in the parameter tensor
-    for i in range(param.numel()):
-        # Save the original value
-        original_value = param.view(-1)[i].item()
+    # Unflatten parameters and set them to the model
+    start_idx = 0
+    for param in model.parameters():
+        param_shape = param.shape
+        numel = param.numel()
+        param.data = torch.tensor(
+            params_flat[start_idx : start_idx + numel].reshape(param_shape),
+            dtype=param.dtype,
+        )
+        start_idx += numel
 
-        # Perturb parameter positively
-        param.view(-1)[i] = original_value + epsilon
-        output_plus = model(topview_image_tensor, search_view_indexibles)
-        output_plus = F.log_softmax(output_plus, dim=1)
-        loss_plus = F.nll_loss(output_plus, torch.zeros_like(output_plus[:, 0], dtype=torch.long))
+    # Compute the loss
+    topview_image, search_view_indexible = input_data
+    output = model(topview_image, search_view_indexible)
+    loss = loss_fn(output, target_data).item()
+    return loss
 
-        # Perturb parameter negatively
-        param.view(-1)[i] = original_value - epsilon
-        output_minus = model(topview_image_tensor, search_view_indexibles)
-        output_minus = F.log_softmax(output_minus, dim=1)
-        loss_minus = F.nll_loss(output_minus, torch.zeros_like(output_minus[:, 0], dtype=torch.long))
 
-        # Restore original value
-        param.view(-1)[i] = original_value
+def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-5):
+    # Flatten model parameters into a 1D numpy array
+    params_flat = np.concatenate(
+        [param.detach().numpy().flatten() for param in model.parameters()]
+    )
 
-        # Compute numerical gradient: (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
-        numerical_grad.view(-1)[i] = (loss_plus - loss_minus) / (2 * epsilon)
+    # Compute numerical gradient using approx_fprime
+    numerical_gradient_flat = approx_fprime(params_flat, loss_fn_wrapper, epsilon)
 
-    return numerical_grad
+    # Reshape numerical gradient back to model parameter shapes
+    numerical_gradients = []
+    start_idx = 0
+    for param in model.parameters():
+        numel = param.numel()
+        grad_shape = param.shape
+        numerical_gradients.append(
+            torch.tensor(
+                numerical_gradient_flat[start_idx : start_idx + numel].reshape(
+                    grad_shape
+                )
+            )
+        )
+        start_idx += numel
 
-def compare_gradients(model, topview_image_tensor, search_view_indexibles, epsilon=1e-5):
-    """
-    Compare the backward and numerical gradients for each custom parameter in the model.
+    return numerical_gradients
 
-    Args:
-        model (nn.Module): The model to check gradients.
-        topview_image_tensor (torch.Tensor): Input tensor for the model.
-        search_view_indexibles (list): List of search view indexibles.
-        epsilon (float): Small perturbation for numerical gradient computation.
-    """
-    # Zero all gradients
+
+def compute_backward_gradient(model, input_data, target_data, loss_fn):
+    # Perform a forward pass to compute the output and loss
+    output = model(input_data)
+    loss = loss_fn(output, target_data)
+
+    # Zero the gradients before the backward pass
     model.zero_grad()
 
-    # Perform a forward pass and compute backward gradients
-    output = model(topview_image_tensor, search_view_indexibles)
-    output = F.log_softmax(output, dim=1)  # Apply log-softmax
-    loss = F.nll_loss(output, torch.zeros_like(output[:, 0], dtype=torch.long))
+    # Perform backward pass to compute gradients
     loss.backward()
 
-    # Check gradients for custom parameters only
-    for name, param in model.named_parameters():
-        if "resnext50" not in name and param.grad is not None:
-            backward_grad = param.grad
-            numerical_grad = compute_numerical_gradient(model, topview_image_tensor, search_view_indexibles, name, param, epsilon)
+    # Store the gradients
+    backward_gradients = [param.grad.clone() for param in model.parameters()]
 
-            # Calculate the relative error
-            relative_error = (backward_grad - numerical_grad).abs() / (numerical_grad.abs() + backward_grad.abs() + 1e-8)
+    return backward_gradients
 
-            print(f"Parameter: {name}")
-            print(f"Backward Gradient: {backward_grad}")
-            print(f"Numerical Gradient: {numerical_grad}")
-            print(f"Relative Error: {relative_error}\n")
 
-# Example usage
+def compare_gradients(numerical_gradients, backward_gradients):
+    # Compare numerical and backward gradients
+    for idx, (num_grad, back_grad) in enumerate(
+        zip(numerical_gradients, backward_gradients)
+    ):
+        relative_error = torch.norm(back_grad - num_grad) / (
+            torch.norm(back_grad) + torch.norm(num_grad)
+        )
+        print(f"Parameter {idx}: Relative error: {relative_error}")
+
+
 if __name__ == "__main__":
-    # Example setup
-    N, k, num_classes = 2, 2, 2
-    model = DZSpecimenClf(N, k, num_classes)
+    from dataset import NDPI_DataModule
+    from DZSpecimenClf import DZSpecimenClf
+    import torch.nn as nn
 
-    # Create dummy inputs
-    topview_image_tensor = torch.randn(1, 3, 224, 224)  # Example top-view image tensor
-    search_view_indexibles = [None]  # Replace with actual objects or dummy placeholders
+    class SpecimenClassifier(nn.Module):
+        def __init__(self, N, num_classes=2, patch_size=224):
+            super(SpecimenClassifier, self).__init__()
+            self.model = DZSpecimenClf(
+                N, num_classes=num_classes, patch_size=patch_size
+            )
 
-    # Compare gradients
-    compare_gradients(model, topview_image_tensor, search_view_indexibles)
+        def forward(self, topview_image_tensor, search_view_indexibles):
+            return self.model(topview_image_tensor, search_view_indexibles)
+
+    metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
+    batch_size = 1
+    N = 1  # Example value
+    patch_size = 224
+    num_classes = 2  # Number of classes in your dataset
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    data_module = NDPI_DataModule(metadata_file, batch_size, num_workers=64)
+
+    # Instantiate dataset and dataloaders
+    data_module = NDPI_DataModule(metadata_file, batch_size, num_workers=64)
+    data_module.setup()
+    train_loader = data_module.train_dataloader()
+    val_loader = data_module.val_dataloader()
+
+    # Instantiate model, loss, optimizer, and metrics
+    model = SpecimenClassifier(N, patch_size=patch_size, num_classes=num_classes).to(
+        device
+    )
+    loss_fn = nn.CrossEntropyLoss()
+
+    # get the first batch of data
+    batch = next(iter(train_loader))
+    topview_image, search_view_indexible, class_index = batch
+
+    # Compute numerical gradients
+    numerical_gradients = compute_numerical_gradient(
+        model, (topview_image, search_view_indexible), class_index, loss_fn
+    )
+
+    # Compute backward gradients
+    backward_gradients = compute_backward_gradient(
+        model, (topview_image, search_view_indexible), class_index, loss_fn
+    )

@@ -268,6 +268,89 @@ class DZSpecimenClf(nn.Module):
 
         return x
 
+    def get_patches(self, topview_image_tensor, search_view_indexibles):
+        # Pass input through the feature extractor part
+        x = self.resnext50(topview_image_tensor)  # x should have shape [b, N*2]
+
+        x = x.view(
+            x.size(0), -1, 2
+        )  # now after reshaping, x should have shape [b, N, 2]
+
+        # assert that the output is of the correct shape
+        assert (
+            x.shape[1] == self.N and x.shape[2] == 2
+        ), f"Output shape is {x.shape}, rather than the expected ({self.N}, 2)"
+
+        # apply the sigmoid activation
+        x = self.sigmoid(x)
+
+        search_view_heights = [
+            search_view_indexible.search_view_height - 1
+            for search_view_indexible in search_view_indexibles
+        ]
+        search_view_widths = [
+            search_view_indexible.search_view_width - 1
+            for search_view_indexible in search_view_indexibles
+        ]
+
+        # padded_search_view_heights will be search_view_heights subtracted by patch_size
+        padded_search_view_heights = [
+            search_view_height - self.patch_size
+            for search_view_height in search_view_heights
+        ]
+        # padded_search_view_widths will be search_view_widths subtracted by patch_size
+        padded_search_view_widths = [
+            search_view_width - self.patch_size
+            for search_view_width in search_view_widths
+        ]
+
+        assert (
+            len(search_view_heights)
+            == len(search_view_widths)
+            == len(search_view_indexibles)
+            == x.shape[0]
+        ), f"Batch dim / length of search_view_heights: {len(search_view_heights)}, search_view_widths: {len(search_view_widths)}, search_view_indexibles: {len(search_view_indexibles)}, x: {x.shape[0]}"
+
+        search_view_heights_tensor = (
+            torch.tensor(padded_search_view_heights).view(-1, 1, 1).to(x.device)
+        )
+        search_view_widths_tensor = (
+            torch.tensor(padded_search_view_widths).view(-1, 1, 1).to(x.device)
+        )
+        # x is a bunch of y, x coordinates there are b, N*k of them, multiply y by the search view height and x by the search view width
+        # Scale x by multiplying the y and x coordinates by the respective dimensions
+        # First column of x are y coordinates, second column are x coordinates
+
+        x_scaled = (x[..., 0].unsqueeze(-1) * search_view_heights_tensor).squeeze(-1)
+        y_scaled = (x[..., 1].unsqueeze(-1) * search_view_widths_tensor).squeeze(-1)
+
+        # now add patch_size // 2 to the x_scaled and y_scaled tensors
+        x_scaled = x_scaled + self.patch_size // 2
+        y_scaled = y_scaled + self.patch_size // 2
+
+        # now stack the x_scaled and y_scaled tensors along the last dimension
+        xy = torch.stack([x_scaled, y_scaled], dim=-1)
+
+        # Continue with x_scaled instead of x
+        x = differentiable_crop_2d_batch(search_view_indexibles, xy)
+
+        # assert that x has shape [b, N, patch_size, patch_size, 3]
+        assert (
+            x.shape[1] == self.N
+            and x.shape[2] == self.patch_size
+            and x.shape[3] == self.patch_size
+            and x.shape[4] == 3
+        ), f"Output shape is {x.shape}, rather than the expected (b, N, {self.patch_size}, {self.patch_size}, 3)"
+
+        # convert to a list of list of PIL images
+        x = x.cpu().numpy()
+        x = x.tolist()
+        for i in range(x.shape[0]):
+            for j in range(x.shape[1]):
+                x[i, j] = transforms.ToPILImage()(x[i, j])
+
+        return x
+
     # def sampling_points(self, topview_image_tensor, search_view_indexibles):
     #     # Pass input through the feature extractor part
     #     x = self.resnext50(topview_image_tensor)
