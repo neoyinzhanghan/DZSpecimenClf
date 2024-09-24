@@ -25,14 +25,14 @@ class DZSpecimenClfToy(nn.Module):
         self.patch_size = patch_size
 
     def forward(self, topview_image_tensor, search_view_indexibles):
-        # downsample the topview_image_tensor to a 4x4 image, note that the image has 3 channels
-        topview_image_tensor = F.interpolate(
+        # downsample the topview_image_tensor to a 4x4 image, the output should have shape [b, 4, 4, 3]
+        topview_image_tensor_downsampled = F.interpolate(
             topview_image_tensor, size=(4, 4), mode="bilinear"
         )
 
-        # flatten the topview_image_tensor into a 1D tensor
-        topview_image_tensor_flattened = topview_image_tensor.view(
-            topview_image_tensor.size(0), -1
+        # flatten the downsampled topview_image_tensor, the output should have shape [b, 4*4*3]
+        topview_image_tensor_flattened = topview_image_tensor_downsampled.view(
+            topview_image_tensor_downsampled.size(0), -1
         )
 
         x = self.topview_linear(topview_image_tensor_flattened)

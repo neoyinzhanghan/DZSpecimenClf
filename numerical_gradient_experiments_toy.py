@@ -38,9 +38,9 @@ def measure_time(device, model, topview_image, search_view_indexible):
 
 def main():
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
-    batch_size = 16
-    N = 8  # Example value
-    patch_size = 224
+    batch_size = 1
+    N = 1  # Example value
+    patch_size = 4
     num_classes = 2  # Number of classes in your dataset
 
     # Instantiate dataset and dataloader
