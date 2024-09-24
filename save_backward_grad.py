@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import json
 
 def compute_backward_gradient(model, input_data, target_data, loss_fn):
     # Perform a forward pass to compute the output and loss
@@ -19,12 +20,13 @@ def compute_backward_gradient(model, input_data, target_data, loss_fn):
     return backward_gradients
 
 
-def save_gradients_to_txt(gradients, file_name="backward_gradients.txt"):
+def save_gradients_to_json(gradients, file_name="backward_gradients.json"):
+    gradients_dict = {}
+    for idx, grad in enumerate(gradients):
+        gradients_dict[f"Parameter_{idx}"] = grad.flatten().cpu().numpy().tolist()
+
     with open(file_name, mode="w") as file:
-        for idx, grad in enumerate(gradients):
-            file.write(f"Parameter {idx}:\n")
-            np.savetxt(file, grad.flatten().cpu().numpy(), fmt="%.6f")
-            file.write("\n")  # Add a newline after each parameter's gradients
+        json.dump(gradients_dict, file, indent=4)
 
 
 if __name__ == "__main__":
@@ -75,7 +77,7 @@ if __name__ == "__main__":
         model, (topview_image, search_view_indexible), class_index, loss_fn
     )
 
-    print("Saving gradients to TXT...")
+    print("Saving gradients to JSON...")
 
-    # Save the gradients to a TXT file
-    save_gradients_to_txt(backward_gradients)
+    # Save the gradients to a JSON file
+    save_gradients_to_json(backward_gradients)
