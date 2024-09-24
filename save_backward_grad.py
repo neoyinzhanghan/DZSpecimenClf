@@ -20,7 +20,7 @@ def compute_backward_gradient(model, input_data, target_data, loss_fn):
     return backward_gradients
 
 
-def save_gradients_to_json(gradients, file_name="backward_gradients.json"):
+def save_gradients_to_json(gradients, file_name="backward_gradients_full.json"):
     gradients_dict = {}
     for idx, grad in enumerate(gradients):
         gradients_dict[f"Parameter_{idx}"] = grad.flatten().cpu().numpy().tolist()
@@ -31,13 +31,13 @@ def save_gradients_to_json(gradients, file_name="backward_gradients.json"):
 
 if __name__ == "__main__":
     from dataset import NDPI_DataModule
-    from DZSpecimenClfToy import DZSpecimenClfToy
+    from DZSpecimenClf import DZSpecimenClf
     import torch.nn as nn
 
     class SpecimenClassifier(nn.Module):
         def __init__(self, N, num_classes=2, patch_size=224):
             super(SpecimenClassifier, self).__init__()
-            self.model = DZSpecimenClfToy(
+            self.model = DZSpecimenClf(
                 N, num_classes=num_classes, patch_size=patch_size
             )
 
