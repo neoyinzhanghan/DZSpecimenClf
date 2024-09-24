@@ -97,7 +97,7 @@ class DZSpecimenClfToy(nn.Module):
         xy = torch.stack([x_scaled, y_scaled], dim=-1)
 
         # Continue with x_scaled instead of x
-        x = differentiable_crop_2d_batch(search_view_indexibles, xy)
+        x = differentiable_crop_2d_batch(search_view_indexibles, xy, patch_size=self.patch_size)
 
         # assert that x has shape [b, N, patch_size, patch_size, 3]
         assert (
