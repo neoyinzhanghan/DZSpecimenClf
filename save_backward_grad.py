@@ -29,6 +29,17 @@ def save_gradients_to_json(gradients, file_name="backward_gradients_full.json"):
         json.dump(gradients_dict, file, indent=4)
 
 
+def save_gradient_range_to_json(gradients, file_name="backward_gradients_range.json"):
+    gradient_ranges_dict = {}
+    for idx, grad in enumerate(gradients):
+        min_val = grad.min().item()
+        max_val = grad.max().item()
+        gradient_ranges_dict[f"Parameter_{idx}"] = {"min": min_val, "max": max_val}
+
+    with open(file_name, mode="w") as file:
+        json.dump(gradient_ranges_dict, file, indent=4)
+
+
 if __name__ == "__main__":
     from dataset import NDPI_DataModule
     from DZSpecimenClf import DZSpecimenClf
@@ -77,7 +88,12 @@ if __name__ == "__main__":
         model, (topview_image, search_view_indexible), class_index, loss_fn
     )
 
-    print("Saving gradients to JSON...")
+    print("Saving full gradients to JSON...")
 
-    # Save the gradients to a JSON file
+    # Save the full gradients to a JSON file
     save_gradients_to_json(backward_gradients)
+
+    print("Saving gradient ranges to JSON...")
+
+    # Save the min/max range of gradients to a JSON file
+    save_gradient_range_to_json(backward_gradients)
