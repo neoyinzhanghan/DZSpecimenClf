@@ -150,9 +150,9 @@ if __name__ == "__main__":
     print("Saving numerical gradients to JSON...")
 
     # Save the numerical gradients to a JSON file
-    save_gradients_to_json(numerical_gradients, file_name="numerical_gradients_full.json")
+    save_gradients_to_json(numerical_gradients, file_name="numerical_gradients_eps.json")
 
     print("Saving numerical gradient ranges to JSON...")
 
     # Save the min/max range of numerical gradients to a JSON file
-    save_gradient_range_to_json(numerical_gradients, file_name="numerical_gradients_range.json")
+    save_gradient_range_to_json(numerical_gradients, file_name="numerical_gradients_eps_range.json")
