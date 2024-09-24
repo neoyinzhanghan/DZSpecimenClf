@@ -153,6 +153,3 @@ if __name__ == "__main__":
     # Compare gradients
     compare_gradients(numerical_gradients, backward_gradients)
 
-    # print the total number of trainable parameters in the model
-    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"Total number of trainable parameters: {total_params}")

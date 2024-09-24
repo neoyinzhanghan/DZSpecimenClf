@@ -19,7 +19,7 @@ def measure_time(device, model, topview_image, search_view_indexible):
     topview_image = topview_image.to(device)
 
     # Make sure GPU is ready before starting time measurement
-    if device == torch.device('cuda'):
+    if device == torch.device("cuda"):
         torch.cuda.synchronize()
 
     start_time = time.time()
@@ -28,7 +28,7 @@ def measure_time(device, model, topview_image, search_view_indexible):
         outputs = model(topview_image, search_view_indexible)
 
     # Make sure all GPU operations finish before stopping the timer
-    if device == torch.device('cuda'):
+    if device == torch.device("cuda"):
         torch.cuda.synchronize()
 
     end_time = time.time()
@@ -55,15 +55,24 @@ def main():
     model = SpecimenClassifier(N, patch_size=patch_size, num_classes=num_classes)
 
     # Measure time on CPU
-    cpu_time = measure_time(torch.device('cpu'), model, topview_image, search_view_indexible)
+    cpu_time = measure_time(
+        torch.device("cpu"), model, topview_image, search_view_indexible
+    )
     print(f"Forward pass time on CPU: {cpu_time:.6f} seconds")
 
     # Measure time on GPU (if available)
     if torch.cuda.is_available():
-        gpu_time = measure_time(torch.device('cuda'), model, topview_image, search_view_indexible)
+        gpu_time = measure_time(
+            torch.device("cuda"), model, topview_image, search_view_indexible
+        )
         print(f"Forward pass time on GPU: {gpu_time:.6f} seconds")
     else:
         print("GPU is not available.")
+
+    # Output:
+    # print the total number of trainable parameters in the model
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Total number of trainable parameters: {total_params}")
 
 
 if __name__ == "__main__":
