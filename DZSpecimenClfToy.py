@@ -35,7 +35,7 @@ class DZSpecimenClfToy(nn.Module):
             topview_image_tensor.size(0), -1
         )
 
-        x = self.topview_linear(topview_image_tensor)
+        x = self.topview_linear(topview_image_tensor_flattened)
 
         x = x.view(
             x.size(0), -1, 2
