@@ -100,7 +100,7 @@ if __name__ == "__main__":
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
     batch_size = 1
     N = 1  # Example value
-    patch_size = 224
+    patch_size = 4
     num_classes = 2  # Number of classes in your dataset
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
