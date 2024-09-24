@@ -73,6 +73,18 @@ def compute_backward_gradient(model, input_data, target_data, loss_fn):
 
 
 def compare_gradients(numerical_gradients, backward_gradients):
+
+    # make sure the numerical and backward gradients have the same length
+    assert len(numerical_gradients) == len(
+        backward_gradients
+    ), "Numerical and backward gradients have different lengths"
+
+    device = "cpu"
+
+    # make sure the numerical and backward gradients are both on the same device cpu
+    numerical_gradients = [grad.to(device) for grad in numerical_gradients]
+    backward_gradients = [grad.to(device) for grad in backward_gradients]
+
     # Compare numerical and backward gradients
     for idx, (num_grad, back_grad) in enumerate(
         zip(numerical_gradients, backward_gradients)
@@ -153,4 +165,3 @@ if __name__ == "__main__":
 
     # Compare gradients
     compare_gradients(numerical_gradients, backward_gradients)
-
