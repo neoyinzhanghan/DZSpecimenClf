@@ -94,6 +94,15 @@ def compare_gradients(numerical_gradients, backward_gradients):
         )
         print(f"Parameter {idx}: Relative error: {relative_error}")
 
+    # save the numerical and backward gradients as numerical_gradients.txt and backward_gradients.txt
+    with open("numerical_gradients.txt", "w") as f:
+        for grad in numerical_gradients:
+            f.write(f"{grad}\n")
+
+    with open("backward_gradients.txt", "w") as f:
+        for grad in backward_gradients:
+            f.write(f"{grad}\n")
+
 
 if __name__ == "__main__":
     from dataset import NDPI_DataModule
