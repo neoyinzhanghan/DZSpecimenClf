@@ -5,7 +5,7 @@ import csv
 
 
 def compute_numerical_gradient(
-    model, input_data, target_data, loss_fn, epsilon=1e-5, n_params=None
+    model, input_data, target_data, loss_fn, epsilon=1e-4, n_params=None
 ):
     # Store numerical gradients for all parameters
     numerical_gradients = []
