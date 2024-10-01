@@ -4,7 +4,7 @@ from scipy.optimize import approx_fprime
 import random
 import csv
 
-def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-5, n_params=None):
+def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-5, n_params=100):
     # Flatten model parameters into a 1D numpy array
     params_flat = np.concatenate(
         [param.detach().cpu().numpy().flatten() for param in model.parameters()]
