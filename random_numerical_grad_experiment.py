@@ -4,28 +4,39 @@ from scipy.optimize import approx_fprime
 import random
 import csv
 
-def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-5, n_params=100):
+
+def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-5, n_params=None):
     # Flatten model parameters into a 1D numpy array
     params_flat = np.concatenate(
         [param.detach().cpu().numpy().flatten() for param in model.parameters()]
     )
 
     # Randomly select n_params indices if specified
-    param_indices = np.arange(len(params_flat))
+    total_params = len(params_flat)
     if n_params:
-        param_indices = np.random.choice(param_indices, size=n_params, replace=False)
+        param_indices = np.random.choice(total_params, size=n_params, replace=False)
+    else:
+        param_indices = np.arange(total_params)
 
     # Define the loss function wrapper
-    def loss_fn_wrapper(params_flat):
+    def loss_fn_wrapper(params_subset):
+        # Update only the selected subset of the parameters
         start_idx = 0
+        subset_idx = 0
         for param in model.parameters():
             param_shape = param.shape
             numel = param.numel()
+
+            if subset_idx + numel > len(params_subset):  # Check if we're out of bounds
+                break
+
+            # Only update the parameters corresponding to the selected indices
             param.data = torch.tensor(
                 params_flat[start_idx: start_idx + numel].reshape(param_shape),
                 dtype=param.dtype,
             )
             start_idx += numel
+            subset_idx += numel
 
         topview_image, search_view_indexible = input_data
         output = model(topview_image, search_view_indexible)
@@ -70,7 +81,6 @@ def compare_gradients(numerical_gradients, backward_gradients, param_indices, cs
     numerical_gradients = [grad.to(device) for grad in numerical_gradients]
     backward_gradients = [grad.to(device) for grad in backward_gradients]
 
-    # Compare and save the selected parameter gradients in a CSV
     with open(csv_filename, mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["Parameter Index", "Numerical Gradient", "Backward Gradient", "Relative Error"])
@@ -78,7 +88,7 @@ def compare_gradients(numerical_gradients, backward_gradients, param_indices, cs
         for idx, param_idx in enumerate(param_indices):
             num_grad = numerical_gradients[idx].flatten()[param_idx]
             back_grad = backward_gradients[idx].flatten()[param_idx]
-            relative_error = torch.norm(back_grad - num_grad) / (torch.norm(back_grad) + torch.norm(num_grad) + 1e-8)  # Adding epsilon for numerical stability
+            relative_error = torch.norm(back_grad - num_grad) / (torch.norm(back_grad) + torch.norm(num_grad) + 1e-8)
             writer.writerow([param_idx, num_grad.item(), back_grad.item(), relative_error.item()])
 
     print(f"Gradient comparison saved to {csv_filename}")
