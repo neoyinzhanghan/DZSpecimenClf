@@ -32,6 +32,8 @@ def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=
 
         # Perturb each element of the parameter tensor based on random indices
         for i in range(param_data.numel()):
+
+            assert current_index == i, f"Current index {current_index} does not match parameter index {i}"
             if current_index in param_indices:  # Only compute gradients for selected indices
                 param_data_flat = param_data.view(-1)  # Flatten parameter tensor
                 orig = param_data_flat[i].item()
