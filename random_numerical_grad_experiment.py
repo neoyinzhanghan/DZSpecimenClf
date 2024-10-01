@@ -19,24 +19,16 @@ def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=
         param_indices = np.arange(total_params)
 
     # Define the loss function wrapper
-    def loss_fn_wrapper(params_subset):
-        # Update only the selected subset of the parameters
+    def loss_fn_wrapper(params_flat_subset):
         start_idx = 0
-        subset_idx = 0
         for param in model.parameters():
             param_shape = param.shape
             numel = param.numel()
-
-            if subset_idx + numel > len(params_subset):  # Check if we're out of bounds
-                break
-
-            # Only update the parameters corresponding to the selected indices
             param.data = torch.tensor(
                 params_flat[start_idx: start_idx + numel].reshape(param_shape),
                 dtype=param.dtype,
             )
             start_idx += numel
-            subset_idx += numel
 
         topview_image, search_view_indexible = input_data
         output = model(topview_image, search_view_indexible)
@@ -81,15 +73,20 @@ def compare_gradients(numerical_gradients, backward_gradients, param_indices, cs
     numerical_gradients = [grad.to(device) for grad in numerical_gradients]
     backward_gradients = [grad.to(device) for grad in backward_gradients]
 
+    # Flatten all gradients for comparison
+    numerical_grad_flat = np.concatenate([grad.flatten().cpu().numpy() for grad in numerical_gradients])
+    backward_grad_flat = np.concatenate([grad.flatten().cpu().numpy() for grad in backward_gradients])
+
+    # Compare only the selected parameter gradients
     with open(csv_filename, mode="w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["Parameter Index", "Numerical Gradient", "Backward Gradient", "Relative Error"])
 
-        for idx, param_idx in enumerate(param_indices):
-            num_grad = numerical_gradients[idx].flatten()[param_idx]
-            back_grad = backward_gradients[idx].flatten()[param_idx]
-            relative_error = torch.norm(back_grad - num_grad) / (torch.norm(back_grad) + torch.norm(num_grad) + 1e-8)
-            writer.writerow([param_idx, num_grad.item(), back_grad.item(), relative_error.item()])
+        for idx in param_indices:
+            num_grad = numerical_grad_flat[idx]
+            back_grad = backward_grad_flat[idx]
+            relative_error = np.linalg.norm(back_grad - num_grad) / (np.linalg.norm(back_grad) + np.linalg.norm(num_grad) + 1e-8)
+            writer.writerow([idx, num_grad, back_grad, relative_error])
 
     print(f"Gradient comparison saved to {csv_filename}")
 
