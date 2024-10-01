@@ -36,7 +36,7 @@ def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=
         params_flat_plus[param_index] += epsilon
         params_flat_minus[param_index] -= epsilon
 
-        # unflatten the parameters
+        # unflatten the parameters and apply them to the model
         start_idx = 0
         for param, param_clone_plus, param_clone_minus in zip(params, params_clone_plus, params_clone_minus):
             numel = param.numel()
@@ -44,12 +44,23 @@ def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=
             param_clone_minus.data = torch.tensor(params_flat_minus[start_idx:start_idx+numel].reshape(param.shape))
             start_idx += numel
 
-        # Perform forward pass to compute the output and loss
-        topview_image, search_view_indexible = input_data
-        output_plus = model(topview_image, search_view_indexible)
-        output_minus = model(topview_image, search_view_indexible)
-        loss_plus = loss_fn(output_plus, target_data)
-        loss_minus = loss_fn(output_minus, target_data)
+        # Perform forward pass with perturbed parameters
+        # Apply the perturbed parameters to the model
+        with torch.no_grad():
+            for original_param, perturbed_param_plus, perturbed_param_minus in zip(model.parameters(), params_clone_plus, params_clone_minus):
+                original_param.data = perturbed_param_plus.data
+            topview_image, search_view_indexible = input_data
+            output_plus = model(topview_image, search_view_indexible)
+            loss_plus = loss_fn(output_plus, target_data)
+
+            for original_param, perturbed_param_plus, perturbed_param_minus in zip(model.parameters(), params_clone_plus, params_clone_minus):
+                original_param.data = perturbed_param_minus.data
+            output_minus = model(topview_image, search_view_indexible)
+            loss_minus = loss_fn(output_minus, target_data)
+
+        # Reset the original model parameters after forward pass
+        for original_param, perturbed_param_plus, perturbed_param_minus in zip(model.parameters(), params_clone_plus, params_clone_minus):
+            original_param.data = param.data
 
         # Compute numerical gradient
         grad_approx = (loss_plus.item() - loss_minus.item()) / (2 * epsilon)
@@ -76,11 +87,11 @@ def compute_backward_gradient(model, input_data, target_data, loss_fn):
 
 def compare_gradients(numerical_gradients, backward_gradients, param_indices, csv_filename="grad_comparison.csv"):
     device = "cpu"
-    numerical_gradients = [grad.to(device) for grad in numerical_gradients]
+    numerical_gradients = [torch.tensor(grad).to(device) for grad in numerical_gradients]
     backward_gradients = [grad.to(device) for grad in backward_gradients]
 
     # Flatten all gradients for comparison
-    numerical_grad_flat = np.concatenate([grad.flatten().cpu().numpy() for grad in numerical_gradients])
+    numerical_grad_flat = np.array(numerical_gradients)
     backward_grad_flat = np.concatenate([grad.flatten().cpu().numpy() for grad in backward_gradients])
 
     # Compare only the selected parameter gradients
@@ -138,4 +149,22 @@ if __name__ == "__main__":
     class_index = class_index.to("cpu")
 
     # Compute numerical gradients for a subset of parameters
-    N_params = 100  # Number of randomly selected
+    N_params = 100  # Number of randomly selected parameters for comparison
+    numerical_gradients, selected_indices = compute_numerical_gradient(
+        model, (topview_image, search_view_indexible), class_index, loss_fn, n_params=N_params
+    )
+
+    print("Computing backward gradient...")
+
+    model.to(device)
+    topview_image = topview_image.to(device)
+    class_index = class_index.to(device)
+
+    backward_gradients = compute_backward_gradient(
+        model, (topview_image, search_view_indexible), class_index, loss_fn
+    )
+
+    print("Comparing gradients...")
+
+    # Compare and save gradients to CSV
+    compare_gradients(numerical_gradients, backward_gradients, selected_indices, "grad_comparison.csv")
