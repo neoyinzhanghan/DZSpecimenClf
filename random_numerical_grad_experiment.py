@@ -20,47 +20,42 @@ def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=
     else:
         param_indices = np.arange(total_params)
 
-    # Forward pass without gradients
-    model.eval()
-    topview_image, search_view_indexible = input_data
-    topview_image.requires_grad = False  # Disable gradient tracking
+    grads = []
 
-    current_index = 0
-    for param in params:
-        num_grad = torch.zeros_like(param)
-        param_data = param.data
+    for param_index in param_indices:
+        
+        # clone the model parameters
+        params_clone_plus = [param.clone() for param in params]
+        params_clone_minus = [param.clone() for param in params]
 
-        # Perturb each element of the parameter tensor based on random indices
-        for i in range(param_data.numel()):
+        # flatten the cloned parameters
+        params_flat_plus = np.concatenate([param.flatten().cpu().numpy() for param in params_clone_plus])
+        params_flat_minus = np.concatenate([param.flatten().cpu().numpy() for param in params_clone_minus]) 
 
-            assert current_index == i, f"Current index {current_index} does not match parameter index {i}"
-            if current_index in param_indices:  # Only compute gradients for selected indices
-                param_data_flat = param_data.view(-1)  # Flatten parameter tensor
-                orig = param_data_flat[i].item()
+        # perturb the selected parameter
+        params_flat_plus[param_index] += epsilon
+        params_flat_minus[param_index] -= epsilon
 
-                # Perturb with +epsilon
-                param_data_flat[i] = orig + epsilon
-                output_plus = model(topview_image, search_view_indexible)
-                loss_plus = loss_fn(output_plus, target_data)
+        # unflatten the parameters
+        start_idx = 0
+        for param, param_clone_plus, param_clone_minus in zip(params, params_clone_plus, params_clone_minus):
+            numel = param.numel()
+            param_clone_plus.data = torch.tensor(params_flat_plus[start_idx:start_idx+numel].reshape(param.shape))
+            param_clone_minus.data = torch.tensor(params_flat_minus[start_idx:start_idx+numel].reshape(param.shape))
+            start_idx += numel
 
-                # Perturb with -epsilon
-                param_data_flat[i] = orig - epsilon
-                output_minus = model(topview_image, search_view_indexible)
-                loss_minus = loss_fn(output_minus, target_data)
+        # Perform forward pass to compute the output and loss
+        topview_image, search_view_indexible = input_data
+        output_plus = model(topview_image, search_view_indexible)
+        output_minus = model(topview_image, search_view_indexible)
+        loss_plus = loss_fn(output_plus, target_data)
+        loss_minus = loss_fn(output_minus, target_data)
 
-                # Reset to original value
-                param_data_flat[i] = orig
+        # Compute numerical gradient
+        grad_approx = (loss_plus.item() - loss_minus.item()) / (2 * epsilon)
+        grads.append(grad_approx)
 
-                # Compute numerical gradient
-                grad_approx = (loss_plus.item() - loss_minus.item()) / (2 * epsilon)
-                num_grad.view(-1)[i] = grad_approx
-
-            current_index += 1  # Keep track of the global parameter index
-
-        numerical_gradients.append(num_grad)
-
-    return numerical_gradients, param_indices
-
+    return grads, param_indices
 
 def compute_backward_gradient(model, input_data, target_data, loss_fn):
     # Perform forward pass and compute loss
@@ -93,8 +88,8 @@ def compare_gradients(numerical_gradients, backward_gradients, param_indices, cs
         writer = csv.writer(file)
         writer.writerow(["Parameter Index", "Numerical Gradient", "Backward Gradient", "Relative Error"])
 
-        for idx in param_indices:
-            num_grad = numerical_grad_flat[idx]
+        for i, idx in enumerate(param_indices):
+            num_grad = numerical_grad_flat[i]
             back_grad = backward_grad_flat[idx]
             relative_error = np.linalg.norm(back_grad - num_grad) / (np.linalg.norm(back_grad) + np.linalg.norm(num_grad) + 1e-8)
             writer.writerow([idx, num_grad, back_grad, relative_error])
