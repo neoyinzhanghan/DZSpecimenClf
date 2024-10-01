@@ -93,13 +93,13 @@ def compare_gradients(numerical_gradients, backward_gradients, param_indices, cs
 
 if __name__ == "__main__":
     from dataset import NDPI_DataModule
-    from DZSpecimenClfToy import DZSpecimenClfToy
+    from DZSpecimenClf import DZSpecimenClf
     import torch.nn as nn
 
     class SpecimenClassifier(nn.Module):
         def __init__(self, N, num_classes=2, patch_size=224):
             super(SpecimenClassifier, self).__init__()
-            self.model = DZSpecimenClfToy(N, num_classes=num_classes, patch_size=patch_size)
+            self.model = DZSpecimenClf(N, num_classes=num_classes, patch_size=patch_size)
 
         def forward(self, topview_image_tensor, search_view_indexibles):
             return self.model(topview_image_tensor, search_view_indexibles)
