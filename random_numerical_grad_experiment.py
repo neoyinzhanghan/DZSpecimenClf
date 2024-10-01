@@ -1,69 +1,78 @@
 import torch
 import numpy as np
-from scipy.optimize import approx_fprime
 import random
 import csv
 
 
 def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-5, n_params=None):
-    # Flatten model parameters into a 1D numpy array
-    params_flat = np.concatenate(
-        [param.detach().cpu().numpy().flatten() for param in model.parameters()]
-    )
+    # Store numerical gradients for all parameters
+    numerical_gradients = []
 
-    # Randomly select n_params indices if specified
-    total_params = len(params_flat)
+    # Get model parameters
+    params = list(model.parameters())
+
+    # Flatten all parameters into a 1D array and count total parameters
+    total_params = sum(param.numel() for param in params)
+
+    # Randomly select a subset of parameter indices for gradient computation
     if n_params:
         param_indices = np.random.choice(total_params, size=n_params, replace=False)
     else:
         param_indices = np.arange(total_params)
 
-    # Define the loss function wrapper
-    def loss_fn_wrapper(params_flat_subset):
-        start_idx = 0
-        for param in model.parameters():
-            param_shape = param.shape
-            numel = param.numel()
-            param.data = torch.tensor(
-                params_flat[start_idx: start_idx + numel].reshape(param_shape),
-                dtype=param.dtype,
-            )
-            start_idx += numel
+    # Forward pass without gradients
+    model.eval()
+    topview_image, search_view_indexible = input_data
+    topview_image.requires_grad = False  # Disable gradient tracking
 
-        topview_image, search_view_indexible = input_data
-        output = model(topview_image, search_view_indexible)
-        loss = loss_fn(output, target_data).item()
-        return loss
+    current_index = 0
+    for param in params:
+        num_grad = torch.zeros_like(param)
+        param_data = param.data
 
-    # Compute numerical gradient using approx_fprime for selected indices
-    numerical_gradient_flat = np.zeros_like(params_flat)
-    selected_grad = approx_fprime(params_flat[param_indices], loss_fn_wrapper, epsilon)
-    numerical_gradient_flat[param_indices] = selected_grad
+        # Perturb each element of the parameter tensor based on random indices
+        for i in range(param_data.numel()):
+            if current_index in param_indices:  # Only compute gradients for selected indices
+                param_data_flat = param_data.view(-1)  # Flatten parameter tensor
+                orig = param_data_flat[i].item()
 
-    # Reshape numerical gradient back to model parameter shapes
-    numerical_gradients = []
-    start_idx = 0
-    for param in model.parameters():
-        numel = param.numel()
-        grad_shape = param.shape
-        numerical_gradients.append(
-            torch.tensor(
-                numerical_gradient_flat[start_idx: start_idx + numel].reshape(grad_shape)
-            )
-        )
-        start_idx += numel
+                # Perturb with +epsilon
+                param_data_flat[i] = orig + epsilon
+                output_plus = model(topview_image, search_view_indexible)
+                loss_plus = loss_fn(output_plus, target_data)
+
+                # Perturb with -epsilon
+                param_data_flat[i] = orig - epsilon
+                output_minus = model(topview_image, search_view_indexible)
+                loss_minus = loss_fn(output_minus, target_data)
+
+                # Reset to original value
+                param_data_flat[i] = orig
+
+                # Compute numerical gradient
+                grad_approx = (loss_plus.item() - loss_minus.item()) / (2 * epsilon)
+                num_grad.view(-1)[i] = grad_approx
+
+            current_index += 1  # Keep track of the global parameter index
+
+        numerical_gradients.append(num_grad)
 
     return numerical_gradients, param_indices
 
 
 def compute_backward_gradient(model, input_data, target_data, loss_fn):
+    # Perform forward pass and compute loss
     topview_image, search_view_indexible = input_data
     output = model(topview_image, search_view_indexible)
     loss = loss_fn(output, target_data)
 
+    # Zero out any existing gradients
     model.zero_grad()
+
+    # Compute gradients using backpropagation
     loss.backward()
 
+    # Extract gradients from the model parameters
     backward_gradients = [param.grad.clone() for param in model.parameters()]
     return backward_gradients
 
@@ -93,13 +102,13 @@ def compare_gradients(numerical_gradients, backward_gradients, param_indices, cs
 
 if __name__ == "__main__":
     from dataset import NDPI_DataModule
-    from DZSpecimenClf import DZSpecimenClf
+    from DZSpecimenClfToy import DZSpecimenClfToy
     import torch.nn as nn
 
     class SpecimenClassifier(nn.Module):
         def __init__(self, N, num_classes=2, patch_size=224):
             super(SpecimenClassifier, self).__init__()
-            self.model = DZSpecimenClf(N, num_classes=num_classes, patch_size=patch_size)
+            self.model = DZSpecimenClfToy(N, num_classes=num_classes, patch_size=patch_size)
 
         def forward(self, topview_image_tensor, search_view_indexibles):
             return self.model(topview_image_tensor, search_view_indexibles)
@@ -107,7 +116,7 @@ if __name__ == "__main__":
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
     batch_size = 1
     N = 1
-    patch_size = 224
+    patch_size = 4
     num_classes = 2
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -132,22 +141,4 @@ if __name__ == "__main__":
     class_index = class_index.to("cpu")
 
     # Compute numerical gradients for a subset of parameters
-    N_params = 100  # Number of randomly selected parameters
-    numerical_gradients, selected_indices = compute_numerical_gradient(
-        model, (topview_image, search_view_indexible), class_index, loss_fn, n_params=N_params
-    )
-
-    print("Computing backward gradient...")
-
-    model.to(device)
-    topview_image = topview_image.to(device)
-    class_index = class_index.to(device)
-
-    backward_gradients = compute_backward_gradient(
-        model, (topview_image, search_view_indexible), class_index, loss_fn
-    )
-
-    print("Comparing gradients...")
-
-    # Compare and save gradients to CSV
-    compare_gradients(numerical_gradients, backward_gradients, selected_indices, "grad_comparison.csv")
+    N_params = 100  # Number of randomly selected
