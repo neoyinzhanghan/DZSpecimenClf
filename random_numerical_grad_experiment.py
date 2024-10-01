@@ -2,6 +2,10 @@ import torch
 import numpy as np
 import random
 import csv
+import torch
+import numpy as np
+import random
+import csv
 
 
 def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-5, n_params=None):
@@ -28,9 +32,9 @@ def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=
         params_clone_plus = [param.clone() for param in params]
         params_clone_minus = [param.clone() for param in params]
 
-        # flatten the cloned parameters
-        params_flat_plus = np.concatenate([param.flatten().cpu().numpy() for param in params_clone_plus])
-        params_flat_minus = np.concatenate([param.flatten().cpu().numpy() for param in params_clone_minus]) 
+        # flatten the cloned parameters and detach to avoid tracking gradients
+        params_flat_plus = np.concatenate([param.detach().flatten().cpu().numpy() for param in params_clone_plus])
+        params_flat_minus = np.concatenate([param.detach().flatten().cpu().numpy() for param in params_clone_minus])
 
         # perturb the selected parameter
         params_flat_plus[param_index] += epsilon
