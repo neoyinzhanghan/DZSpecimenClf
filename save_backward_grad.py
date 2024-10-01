@@ -42,13 +42,13 @@ def save_gradient_range_to_json(gradients, file_name="backward_gradients_range.j
 
 if __name__ == "__main__":
     from dataset import NDPI_DataModule
-    from DZSpecimenClfToy import DZSpecimenClfToy
+    from DZSpecimenClf import DZSpecimenClf
     import torch.nn as nn
 
     class SpecimenClassifier(nn.Module):
         def __init__(self, N, num_classes=2, patch_size=224):
             super(SpecimenClassifier, self).__init__()
-            self.model = DZSpecimenClfToy(
+            self.model = DZSpecimenClf(
                 N, num_classes=num_classes, patch_size=patch_size
             )
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
     batch_size = 1
     N = 1  # Example value
-    patch_size = 4
+    patch_size = 224
     num_classes = 2  # Number of classes in your dataset
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
