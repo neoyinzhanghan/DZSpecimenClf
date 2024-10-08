@@ -8,29 +8,32 @@ from dataset import NDPI_DataModule
 from DZSpecimenClf import DZSpecimenClf
 from param_flat import flatten_parameters, unflatten_parameters
 
+
 def sample_beta_distribution(n_params=10, total_params=100, alpha=0.5, beta_param=0.5):
     """
     Sample indices from a Beta distribution that is most likely near 0 and 1.
-    
+
     Parameters:
         n_params (int): The number of indices to sample.
         total_params (int): The total number of available indices.
         alpha (float): Alpha parameter for the Beta distribution.
         beta_param (float): Beta parameter for the Beta distribution.
-    
+
     Returns:
         np.ndarray: An array of sampled indices.
     """
     # Generate x values between 0.01 and 0.99 to avoid exact 0 and 1
     x = np.linspace(0.01, 0.99, total_params)
-    
+
     # Calculate the Beta distribution PDF values
     probabilities = beta.pdf(x, alpha, beta_param)
     probabilities /= probabilities.sum()  # Normalize to ensure it sums to 1
-    
+
     # Sample indices based on the Beta distribution probabilities
-    param_indices = np.random.choice(total_params, size=n_params, replace=False, p=probabilities)
-    
+    param_indices = np.random.choice(
+        total_params, size=n_params, replace=False, p=probabilities
+    )
+
     return param_indices
 
 
@@ -43,15 +46,19 @@ class SpecimenClassifier(nn.Module):
         return self.model(topview_image_tensor, search_view_indexibles)
 
 
-def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=1e-3, n_params=None):
+def compute_numerical_gradient(
+    model, input_data, target_data, loss_fn, epsilon=1e-3, n_params=None
+):
     numerical_gradients = []
     params = list(model.parameters())
     param_shapes = [param.shape for param in params]
     total_params = sum(param.numel() for param in params)
 
     if n_params:
-        
-        param_indices = sample_beta_distribution(n_params=n_params, total_params=total_params, alpha=0.5, beta_param=0.5)
+
+        param_indices = sample_beta_distribution(
+            n_params=n_params, total_params=total_params, alpha=0.5, beta_param=0.5
+        )
     else:
         param_indices = np.arange(total_params)
 
@@ -96,7 +103,10 @@ def compute_backward_gradient(model, input_data, target_data, loss_fn):
 
 
 def compare_gradients(
-    numerical_gradients, backward_gradients, param_indices, csv_filename="eps_grad_comparison.csv"
+    numerical_gradients,
+    backward_gradients,
+    param_indices,
+    csv_filename="eps_grad_comparison.csv",
 ):
     device = "cpu"
     numerical_gradients = [grad for grad in numerical_gradients]
@@ -106,7 +116,14 @@ def compare_gradients(
 
     with open(csv_filename, mode="w", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(["Parameter Index", "Numerical Gradient", "Backward Gradient", "Relative Error"])
+        writer.writerow(
+            [
+                "Parameter Index",
+                "Numerical Gradient",
+                "Backward Gradient",
+                "Relative Error",
+            ]
+        )
 
         for i in range(len(param_indices)):
             num_grad = numerical_gradients[i]
@@ -133,8 +150,13 @@ if __name__ == "__main__":
     data_module.setup()
     train_loader = data_module.train_dataloader()
 
-    model = SpecimenClassifier(N, patch_size=patch_size, num_classes=num_classes).to(device)
+    model = SpecimenClassifier(N, patch_size=patch_size, num_classes=num_classes).to(
+        device
+    )
     loss_fn = nn.CrossEntropyLoss()
+
+    # print the total number of parameters in the model
+    total_params = sum(p.numel() for p in model.parameters())
 
     batch = next(iter(train_loader))
     topview_image, search_view_indexible, class_index = batch
@@ -147,13 +169,17 @@ if __name__ == "__main__":
     input_data = (input_data[0].to("cpu"), input_data[1])
     class_index = class_index.to("cpu")
 
-    N_params = 100  # Number of randomly selected parameters for numerical gradient calculation
+    N_params = (
+        100  # Number of randomly selected parameters for numerical gradient calculation
+    )
     numerical_gradients, param_indices = compute_numerical_gradient(
         model, input_data, class_index, loss_fn, n_params=N_params
     )
 
     print("Computing backward gradient...")
-    backward_gradients = compute_backward_gradient(model, input_data, class_index, loss_fn)
+    backward_gradients = compute_backward_gradient(
+        model, input_data, class_index, loss_fn
+    )
 
     print("Comparing gradients...")
     compare_gradients(numerical_gradients, backward_gradients, param_indices)
