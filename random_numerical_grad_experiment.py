@@ -2,10 +2,36 @@ import torch
 import numpy as np
 import csv
 import torch.nn as nn
+from scipy.stats import beta
 from tqdm import tqdm
 from dataset import NDPI_DataModule
 from DZSpecimenClf import DZSpecimenClf
 from param_flat import flatten_parameters, unflatten_parameters
+
+def sample_beta_distribution(n_params=10, total_params=100, alpha=0.5, beta_param=0.5):
+    """
+    Sample indices from a Beta distribution that is most likely near 0 and 1.
+    
+    Parameters:
+        n_params (int): The number of indices to sample.
+        total_params (int): The total number of available indices.
+        alpha (float): Alpha parameter for the Beta distribution.
+        beta_param (float): Beta parameter for the Beta distribution.
+    
+    Returns:
+        np.ndarray: An array of sampled indices.
+    """
+    # Generate x values between 0.01 and 0.99 to avoid exact 0 and 1
+    x = np.linspace(0.01, 0.99, total_params)
+    
+    # Calculate the Beta distribution PDF values
+    probabilities = beta.pdf(x, alpha, beta_param)
+    probabilities /= probabilities.sum()  # Normalize to ensure it sums to 1
+    
+    # Sample indices based on the Beta distribution probabilities
+    param_indices = np.random.choice(total_params, size=n_params, replace=False, p=probabilities)
+    
+    return param_indices
 
 
 class SpecimenClassifier(nn.Module):
@@ -24,7 +50,8 @@ def compute_numerical_gradient(model, input_data, target_data, loss_fn, epsilon=
     total_params = sum(param.numel() for param in params)
 
     if n_params:
-        param_indices = np.random.choice(total_params, size=n_params, replace=False)
+        
+        param_indices = sample_beta_distribution(n_params=n_params, total_params=total_params, alpha=0.5, beta_param=0.5)
     else:
         param_indices = np.arange(total_params)
 
