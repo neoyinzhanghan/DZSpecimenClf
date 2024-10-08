@@ -158,6 +158,8 @@ if __name__ == "__main__":
     # print the total number of parameters in the model
     total_params = sum(p.numel() for p in model.parameters())
 
+    print(f"Total number of parameters: {total_params}")
+
     batch = next(iter(train_loader))
     topview_image, search_view_indexible, class_index = batch
     input_data = (topview_image.to(device), search_view_indexible)
