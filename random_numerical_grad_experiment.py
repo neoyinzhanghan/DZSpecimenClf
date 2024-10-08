@@ -172,7 +172,7 @@ if __name__ == "__main__":
     class_index = class_index.to("cpu")
 
     N_params = (
-        100  # Number of randomly selected parameters for numerical gradient calculation
+        1000  # Number of randomly selected parameters for numerical gradient calculation
     )
     numerical_gradients, param_indices = compute_numerical_gradient(
         model, input_data, class_index, loss_fn, n_params=N_params
