@@ -92,7 +92,7 @@ class SearchViewIndexible:
             print(f"Error loading {self.wsi_path}: {e}")
             raise e
 
-        # Extracting a region of 1x1 pixels
+        # Extracting a region of pathc_size x patch_size pixels
         region = slide.read_region(
             (
                 int(TL_x * (2**self.search_view_level)),

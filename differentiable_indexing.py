@@ -233,6 +233,35 @@ def differentiable_index_2d_batch(indexable_objs, indices_batch):
 
 
 class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
+    
+    # @staticmethod
+    # def forward(ctx, indexable_objs, indices_batch, patch_size=224):
+    #     device = indices_batch.device # Ensure device consistency
+
+    #     output_batch = []
+    #     saved_tensors = []
+
+    #     for i in range(len(indexable_objs)):
+
+    #         indices = indices_batch[i]
+    #         indexable_obj = indexable_objs[i]
+
+    #         central_indices_y_floor = torch.floor(indices[:, 0]).long()
+    #         central_indices_x_floor = torch.floor(indices[:, 1]).long()
+    #         central_indices_y_ceil = torch.ceil(indices[:, 0]).long()
+    #         central_indices_x_ceil = torch.ceil(indices[:, 1]).long()
+
+    #         #TODO: Why are we subtracting by half of the patch size? TL ==  topleft
+    #         # calculate the TL_indices floor and ceil by subtracting half of the patch size
+    #         TL_indices_y_floor = central_indices_y_floor - patch_size // 2
+    #         TL_indices_x_floor = central_indices_x_floor - patch_size // 2
+    #         TL_indices_y_ceil = central_indices_y_ceil - patch_size // 2
+    #         TL_indices_x_ceil = central_indices_x_ceil - patch_size // 2
+        
+
+
+
+
     @staticmethod
     def forward(ctx, indexable_objs, indices_batch, patch_size=224):
         device = indices_batch.device  # Ensure device consistency
@@ -256,6 +285,7 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             central_indices_y_ceil = torch.ceil(indices[:, 0]).long()
             central_indices_x_ceil = torch.ceil(indices[:, 1]).long()
 
+            #TODO: Why are we subtracting by half of the patch size? TL ==  topleft
             # calculate the TL_indices floor and ceil by subtracting half of the patch size
             TL_indices_y_floor = central_indices_y_floor - patch_size // 2
             TL_indices_x_floor = central_indices_x_floor - patch_size // 2
@@ -320,16 +350,7 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
                 dim=0,
             )
 
-            # Save tensors for backward pass
-            saved_tensors.extend(
-                [
-                    indices,
-                    patches_floor_floor,
-                    patches_floor_ceil,
-                    patches_ceil_floor,
-                    patches_ceil_ceil,
-                ]
-            )
+
 
             # Bilinear interpolation
             weights_y_floor = indices[:, 0] - TL_indices_y_floor.float().to(device)
@@ -375,6 +396,21 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             )
             output_batch.append(output)
 
+            # Save tensors for backward pass
+            saved_tensors.extend(
+                [
+                    indices,
+                    patches_floor_floor,
+                    patches_floor_ceil,
+                    patches_ceil_floor,
+                    patches_ceil_ceil,
+                    weights_x_floor,
+                    weights_x_ceil,
+                    weights_y_floor,
+                    weights_y_ceil,
+                ]
+            )
+
         # Save all necessary tensors for the backward pass
         ctx.save_for_backward(*saved_tensors)
 
@@ -397,7 +433,7 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
         grad_indices_batch = []
 
         # Each item in the batch has 5 saved tensors
-        num_saved_tensors_per_item = 5
+        num_saved_tensors_per_item = 9
 
         batch_size = grad_output.shape[0]
 
@@ -413,6 +449,10 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
                 patches_floor_ceil,
                 patches_ceil_floor,
                 patches_ceil_ceil,
+                weights_x_floor,
+                weights_x_ceil,
+                weights_y_floor,
+                weights_y_ceil,
             ) = saved_tensors[start_idx:end_idx]
 
             grad_output_item = grad_output[i]
@@ -423,19 +463,27 @@ class DifferentiableCrop2DBatchFunction(torch.autograd.Function):
             patches_ceil_floor = patches_ceil_floor.to(grad_output_item.device)
             patches_ceil_ceil = patches_ceil_ceil.to(grad_output_item.device)
 
-            # Calculate gradients for indices
-            grad_indices_y_mat = (patches_ceil_floor + patches_ceil_ceil) - (
-                patches_floor_floor + patches_floor_ceil
-            )
+            # # Calculate gradients for indices
+            # grad_indices_y_mat = (patches_ceil_floor + patches_ceil_ceil) - (
+            #     patches_floor_floor + patches_floor_ceil
+            # )
+            # grad_indices_x_mat = (patches_floor_ceil + patches_ceil_ceil) - (
+            #     patches_floor_floor + patches_ceil_floor
+            # )
 
-            grad_indices_x_mat = (patches_floor_ceil + patches_ceil_ceil) - (
-                patches_floor_floor + patches_ceil_floor
-            )
+            # grad_indices_mat = y_inter_ceil - y_inter_floor
+            grad_indices_y_mat = weights_x_floor*(patches_ceil_ceil - patches_floor_ceil) + weights_x_ceil*(patches_ceil_floor - patches_floor_floor)
+
+            # grad_indices_mat = x_inter_ceil - x_inter_floor
+            grad_indices_x_mat = weights_y_floor*(patches_ceil_ceil - patches_ceil_floor) + weights_y_ceil*(patches_floor_ceil - patches_floor_floor)
+
+            # print(f"Shape of grad_indices_y_mat: {grad_indices_y_mat.shape}")
 
             # stack the gradients for y and x along the dim 1
             grad_indices_mat = torch.stack(
                 [grad_indices_y_mat, grad_indices_x_mat], dim=1
             )
+            # print(f"Shape of grad_indices_mat: {grad_indices_mat.shape}")
 
             # Ensure indices_mat is a float tensor
             if grad_indices_mat.dtype != torch.float32:

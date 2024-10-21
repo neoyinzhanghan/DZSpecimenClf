@@ -65,7 +65,7 @@ class_0_augmentation = A.Compose(
         A.GaussianBlur(p=0.5),
         # now apply contrast and color augmentation
         A.ColorJitter(p=0.5),
-        A.RandomContrast(p=0.5),
+        # A.RandomContrast(p=0.5),
         A.RandomGamma(p=0.5),
         ToTensorV2(),
     ]

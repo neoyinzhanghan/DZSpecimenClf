@@ -183,6 +183,7 @@ class DZSpecimenClf(nn.Module):
         # apply the sigmoid activation
         x = self.sigmoid(x)
 
+        #TODO: the search view height and width will be swapped
         search_view_heights = [
             search_view_indexible.search_view_height - 1
             for search_view_indexible in search_view_indexibles
