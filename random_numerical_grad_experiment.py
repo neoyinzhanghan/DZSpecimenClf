@@ -51,7 +51,7 @@ def compute_numerical_gradient(
     input_data,
     target_data,
     loss_fn,
-    epsilon=1e-3,
+    epsilon=1e-2,
     n_params=None,  # 1e-3 seems optimal for epsilon
 ):
     numerical_gradients = []
