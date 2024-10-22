@@ -154,7 +154,7 @@ def compare_gradients(
 if __name__ == "__main__":
     metadata_file = "/home/greg/Documents/neo/wsi_specimen_clf_metadata.csv"
     batch_size = 1
-    N = 1
+    N = 50
     patch_size = 224
     num_classes = 2
 
