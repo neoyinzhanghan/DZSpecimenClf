@@ -61,14 +61,15 @@ def compute_numerical_gradient(
 
     if n_params:
 
-        # param_indices = sample_beta_distribution(
-        #     n_params=n_params, total_params=total_params, alpha=0.5, beta_param=0.5
-        # )
+        param_indices = sample_beta_distribution(
+            n_params=n_params, total_params=total_params, alpha=0.5, beta_param=0.5
+        )
 
         # add the first 600 indices and last 600 indices to the list
         param_indices = np.concatenate(
             [
                 np.arange(n_params // 2),
+                param_indices,
                 np.arange(total_params - n_params // 2, total_params),
             ]
         )
