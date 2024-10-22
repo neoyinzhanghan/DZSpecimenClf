@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 from torchvision.models import ResNeXt50_32X4D_Weights
-from differentiable_indexing_neo import differentiable_crop_2d_batch
+from differentiable_indexing import differentiable_crop_2d_batch
 from PIL import ImageDraw
 from torchvision import transforms
 
