@@ -69,7 +69,6 @@ def compute_numerical_gradient(
         param_indices = np.concatenate(
             [
                 np.arange(n_params // 2),
-                param_indices,
                 np.arange(total_params - n_params // 2, total_params),
             ]
         )
