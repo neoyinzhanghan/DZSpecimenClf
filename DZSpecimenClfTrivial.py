@@ -172,6 +172,15 @@ class DZSpecimenClf(nn.Module):
         # x is just loc_vec repeated batch_size times
         x = self.loc_vec.repeat(topview_image_tensor.size(0), 1)
 
+        # assert that the output is of the correct shape
+        assert (
+            x.shape[1] == self.N * 2
+        ), f"Output shape is {x.shape}, rather than the expected ({self.N * 2})"
+
+        assert (
+            len(search_view_indexibles) == x.shape[0]
+        ), f"Batch dim / length of search_view_indexibles: {len(search_view_indexibles)}, x: {x.shape[0]}"
+
         x = x.view(
             x.size(0), -1, 2
         )  # now after reshaping, x should have shape [b, N, 2]
@@ -180,9 +189,6 @@ class DZSpecimenClf(nn.Module):
         assert (
             x.shape[1] == self.N and x.shape[2] == 2
         ), f"Output shape is {x.shape}, rather than the expected ({self.N}, 2)"
-
-        # apply the sigmoid activation
-        x = self.sigmoid(x)
 
         # TODO: the search view height and width will be swapped
         search_view_heights = [
