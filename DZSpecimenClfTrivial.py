@@ -155,7 +155,7 @@ class DZSpecimenClf(nn.Module):
 
         self.patch_feature_extractor = models.resnext50_32x4d(pretrained=False)
         # do not need the last layer of linear forward
-        self.patch_feature_extractor.finsc = nn.Identity()
+        self.patch_feature_extractor.fc = nn.Identity()
         self.aggregator = MultiHeadAttentionClassifier(d_model=2048, num_heads=8)
 
         self.last_layer = nn.Linear(2048, num_classes)
