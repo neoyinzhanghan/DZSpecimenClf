@@ -5,7 +5,7 @@ import torch.nn as nn
 from scipy.stats import beta
 from tqdm import tqdm
 from dataset import NDPI_DataModule
-from DZSpecimenClf import DZSpecimenClf
+from DZSpecimenClfTrivial import DZSpecimenClf
 from param_flat import flatten_parameters, unflatten_parameters
 
 
@@ -64,6 +64,9 @@ def compute_numerical_gradient(
         param_indices = sample_beta_distribution(
             n_params=n_params, total_params=total_params, alpha=0.5, beta_param=0.5
         )
+
+        # add the first 600 indices and last 600 indices to the list
+        param_indices = np.arange(n_params)
     else:
         param_indices = np.arange(total_params)
 
